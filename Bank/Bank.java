@@ -108,22 +108,36 @@ public class Bank {
         return null;
     }
 
+    // Existing constructors and getters/setters...
+
     /**
      * Displays accounts based on the specified type.
      * @param accountType Type of account to display.
      */
     public <T> void showAccounts(Class<T> accountType) {
-        // TODO: Complete this method
+        String typeName = accountType.getSimpleName();
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT * FROM Account WHERE BankID = ? AND AccountType = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setInt(1, this.ID);
+                pstmt.setString(2, typeName);
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    System.out.println("Account Number: " + rs.getString("AccountNumber") + ", Balance: " + rs.getDouble("Balance"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error displaying accounts: " + e.getMessage());
+        }
     }
 
     /**
      * Retrieves an account by account number from the specified bank.
-     * @param bank Bank to search from.
      * @param accountNum Account number to find.
      * @return Account object if found, null otherwise.
      */
-    public Account getBankAccount(Bank bank, String accountNum) {
-        // TODO: Implement credit recompense processing
+    public Account getBankAccount(String accountNum) {
+        // TODO: COMPLETE THIS METHOD
         return null;
     }
 
@@ -131,8 +145,7 @@ public class Bank {
      * Creates a new credit account.
      * @return New CreditAccount object.
      */
-    public CreditAccount createNewCreditAccount() {
-        // TODO: Implement credit recompense processing
+    public CreditAccount createNewCreditAccount(String accountNum, double initialBalance) {
         return null;
     }
 
@@ -140,24 +153,33 @@ public class Bank {
      * Creates a new savings account.
      * @return New SavingsAccount object.
      */
-    public SavingsAccount createNewSavingsAccount() {
-        // TODO: Implement credit recompense processing
+    public SavingsAccount createNewSavingsAccount(String accountNum, double initialBalance) {
+        // TODO: COMPLETE THIS METHOD
         return null;
     }
 
     /**
      * Adds a new account to the bank if the account number doesn't already exist.
      */
-    public void addNewAccount() {
-        // TODO: Implement account addition
+    public void addNewAccount(Account account) {
+        // TODO: Complete this method
     }
 
     /**
      * Checks if an account exists in the specified bank by account number.
      * @return True if the account exists, false otherwise.
      */
-    public boolean accountExists() {
-        // TODO: Implement credit recompense processing
+    public boolean accountExists(String accountNum) {
+        String sql = "SELECT 1 FROM Account WHERE BankID = ? AND AccountID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, this.ID);
+            pstmt.setString(2, accountNum);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.out.println("Error checking account existence: " + e.getMessage());
+        }
         return false;
     }
 

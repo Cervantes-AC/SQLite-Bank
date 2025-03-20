@@ -22,14 +22,7 @@ public class BankLauncher {
 
     /** Initializes bank interaction. */
     public static void bankInit() {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String createBanksTable = "CREATE TABLE IF NOT EXISTS Banks (ID INTEGER PRIMARY KEY, Name TEXT, Passcode TEXT)";
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute(createBanksTable);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // TODO: COMPLETE THIS METHOD
     }
 
     /** Displays accounts of the logged-in bank, categorized by type. */
