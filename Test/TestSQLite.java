@@ -28,7 +28,7 @@ public class TestSQLite {
                                 Processing Fee: %.2f
                                 ------------------------
                                 """,
-                                rs.getInt("ID"),
+                                rs.getInt("BankID"),
                                 rs.getString("name"),
                                 rs.getString("passcode"),
                                 rs.getDouble("DepositLimit"),

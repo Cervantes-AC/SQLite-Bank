@@ -1,137 +1,176 @@
 package Bank;
 
-import Accounts.Account;
+import Accounts.*;
+import Main.Field;
 import java.sql.*;
-import java.util.Scanner;
+import java.util.ArrayList;
+
+/**
+ * Bank Class
+ * Represents a bank that manages accounts and enforces transaction limits.
+ *
+ * Now integrates with SQLite for persistent data storage.
+ */
 
 public class Bank {
-    private int bankID;
+    private int ID;
     private String name, passcode;
-    private double depositLimit = 50000.0, withdrawLimit = 50000.0, creditLimit = 100000.0;
-    private double processingFee = 10.0;
+    private double DepositLimit, WithdrawLimit, CreditLimit;
+    private double processingFee;
 
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    // Constructor with default limits
-    public Bank(String name, String passcode) {
+    public Bank(int ID, String name, String passcode) {
+        this.ID = ID;
         this.name = name;
         this.passcode = passcode;
     }
 
-    // Display bank information
-    @Override
-    public String toString() {
-        return String.format("""
-                ------------------------
-                Bank ID: %d
-                Name: %s
-                Passcode: %s
-                Deposit Limit: %.2f
-                Withdraw Limit: %.2f
-                Credit Limit: %.2f
-                Processing Fee: %.2f
-                ------------------------
-                """,
-                bankID, name, passcode, depositLimit, withdrawLimit, creditLimit, processingFee);
+    public Bank(int ID, String name, String passcode, double DepositLimit, double WithdrawLimit, double CreditLimit, double processingFee) {
+        this(ID, name, passcode);
+        this.DepositLimit = DepositLimit;
+        this.WithdrawLimit = WithdrawLimit;
+        this.CreditLimit = CreditLimit;
+        this.processingFee = processingFee;
     }
 
-    // Insert Bank into SQLite database
-    public boolean insertBank() {
-        String sql = """
-            INSERT INTO Bank (name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee) 
-            VALUES (?, ?, ?, ?, ?, ?)""";
+    /** Getters and Setters **/
+    public int getID() { return ID; }
+    public void setID(int ID) { this.ID = ID; }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getPasscode() { return passcode; }
+    public void setPasscode(String passcode) { this.passcode = passcode; }
+
+    public double getDepositLimit() { return DepositLimit; }
+    public void setDepositLimit(double depositLimit) { DepositLimit = depositLimit; }
+
+    public double getWithdrawLimit() { return WithdrawLimit; }
+    public void setWithdrawLimit(double withdrawLimit) { WithdrawLimit = withdrawLimit; }
+
+    public double getCreditLimit() { return CreditLimit; }
+    public void setCreditLimit(double creditLimit) { CreditLimit = creditLimit; }
+
+    public double getProcessingFee() { return processingFee; }
+    public void setProcessingFee(double processingFee) { this.processingFee = processingFee; }
+
+    /**
+     * Saves the bank to the database.
+     */
+    public void saveToDatabase() {
+        String sql = "INSERT INTO Bank (name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, this.name);
             pstmt.setString(2, this.passcode);
-            pstmt.setDouble(3, this.depositLimit);
-            pstmt.setDouble(4, this.withdrawLimit);
-            pstmt.setDouble(5, this.creditLimit);
+            pstmt.setDouble(3, this.DepositLimit);
+            pstmt.setDouble(4, this.WithdrawLimit);
+            pstmt.setDouble(5, this.CreditLimit);
             pstmt.setDouble(6, this.processingFee);
+            pstmt.executeUpdate();
 
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Bank added successfully!");
-                ResultSet rs = pstmt.getGeneratedKeys();
-                if (rs.next()) {
-                    this.bankID = rs.getInt(1);
-                }
-                return true;
-            }
+            System.out.println("Bank saved to database.");
         } catch (SQLException e) {
-            System.out.println("SQLite error: " + e.getMessage());
+            System.out.println("Database error: " + e.getMessage());
         }
-
-        return false;
     }
 
-    // Getters and Setters
-    public int getBankID() { return bankID; }
-    public String getName() { return name; }
-    public String getPasscode() { return passcode; }
-    public double getDepositLimit() { return depositLimit; }
-    public double getWithdrawLimit() { return withdrawLimit; }
-    public double getCreditLimit() { return creditLimit; }
-    public double getProcessingFee() { return processingFee; }
-
-    public void setBankID(int bankID) { this.bankID = bankID; }
-    public void setName(String name) { this.name = name; }
-    public void setPasscode(String passcode) { this.passcode = passcode; }
-    public void setDepositLimit(double depositLimit) { this.depositLimit = depositLimit; }
-    public void setWithdrawLimit(double withdrawLimit) { this.withdrawLimit = withdrawLimit; }
-    public void setCreditLimit(double creditLimit) { this.creditLimit = creditLimit; }
-    public void setProcessingFee(double processingFee) { this.processingFee = processingFee; }
-
-    // Retrieve an account by account number and bank ID
-    public static Account getBankAccount() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter Bank ID: ");
-        int bankID = scanner.nextInt();
-        scanner.nextLine();
-
-        System.out.print("Enter Account ID: ");
-        String accountID = scanner.nextLine();
-
-        String query = "SELECT * FROM Account WHERE AccountID = ? AND BankID = ?";
+    /**
+     * Loads a bank from the database by its ID.
+     * @param bankID The ID of the bank.
+     * @return Bank object if found, null otherwise.
+     */
+    public static Bank loadFromDatabase(int bankID) {
+        String sql = "SELECT * FROM Bank WHERE BankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, accountID);
-            pstmt.setInt(2, bankID);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, bankID);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                System.out.println("Account Found!");
-                return new Account(
+                return new Bank(
                         rs.getInt("BankID"),
-                        rs.getString("AccountType"),
-                        rs.getString("FirstName"),
-                        rs.getString("LastName"),
-                        rs.getString("Email"),
-                        rs.getString("PIN")
+                        rs.getString("name"),
+                        rs.getString("passcode"),
+                        rs.getDouble("DepositLimit"),
+                        rs.getDouble("WithdrawLimit"),
+                        rs.getDouble("CreditLimit"),
+                        rs.getDouble("processingFee")
                 );
-            } else {
-                System.out.println("No account found with the given details.");
             }
         } catch (SQLException e) {
-            System.out.println("Error retrieving account: " + e.getMessage());
+            System.out.println("Database error: " + e.getMessage());
         }
         return null;
     }
 
-    // Check if an account exists
-    public static boolean accountExists(Bank bank, String accountNum) {
-        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND BankID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, accountNum);
-            pstmt.setInt(2, bank.getBankID());
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next();
-        } catch (SQLException e) {
-            System.out.println("Error checking account: " + e.getMessage());
-        }
+    /**
+     * Displays accounts based on the specified type.
+     * @param accountType Type of account to display.
+     */
+    public <T> void showAccounts(Class<T> accountType) {
+        // TODO: Complete this method
+    }
+
+    /**
+     * Retrieves an account by account number from the specified bank.
+     * @param bank Bank to search from.
+     * @param accountNum Account number to find.
+     * @return Account object if found, null otherwise.
+     */
+    public Account getBankAccount(Bank bank, String accountNum) {
+        // TODO: Implement credit recompense processing
+        return null;
+    }
+
+    /**
+     * Creates a new credit account.
+     * @return New CreditAccount object.
+     */
+    public CreditAccount createNewCreditAccount() {
+        // TODO: Implement credit recompense processing
+        return null;
+    }
+
+    /**
+     * Creates a new savings account.
+     * @return New SavingsAccount object.
+     */
+    public SavingsAccount createNewSavingsAccount() {
+        // TODO: Implement credit recompense processing
+        return null;
+    }
+
+    /**
+     * Adds a new account to the bank if the account number doesn't already exist.
+     */
+    public void addNewAccount() {
+        // TODO: Implement account addition
+    }
+
+    /**
+     * Checks if an account exists in the specified bank by account number.
+     * @return True if the account exists, false otherwise.
+     */
+    public boolean accountExists() {
+        // TODO: Implement credit recompense processing
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Bank{" +
+                "ID=" + ID +
+                ", name='" + name + '\'' +
+                ", passcode='" + passcode + '\'' +
+                ", DepositLimit=" + DepositLimit +
+                ", WithdrawLimit=" + WithdrawLimit +
+                ", CreditLimit=" + CreditLimit +
+                ", processingFee=" + processingFee +
+                '}';
     }
 }
