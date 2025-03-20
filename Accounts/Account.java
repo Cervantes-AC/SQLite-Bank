@@ -2,6 +2,7 @@ package Accounts;
 
 import Bank.*;
 import Transactions.*;
+import java.sql.*;
 import java.util.ArrayList;
 
 /**
@@ -10,31 +11,35 @@ import java.util.ArrayList;
  * Provides basic functionality and tracks account information and transactions.
  *
  * Attributes:
- * - Bank bank: The associated bank object.
- * - String accountNumber: The unique account number.
+ * - Bank BankID: The associated bank object.
+ * - String AccountID: The unique account ID.
+ * - String AccountType: The type of account (e.g., SA, CA).
  * - String ownerFirstName, ownerLastName, ownerEmail: Account owner's personal information.
  * - String pin: The security PIN for this account.
  * - ArrayList<Transaction> transactions: A log of all account transactions.
  *
  * Methods:
  * - getFullName(): Returns the full name of the account owner.
- * - addNewTransaction(): Logs a new transaction.
- * - getTransactionsInfo(): Returns a formatted string of all transaction details.
+ * - addNewTransaction(): Logs a new transaction and saves it to the database.
+ * - getTransactionsInfo(): Retrieves all transactions from the database.
  * - Various getters and setters for account data.
  */
 public abstract class Account {
-    private Bank bank;
-    private String accountNumber;
+    private Bank BankID;
+    private String AccountID;
+    private String AccountType;
     private String ownerFirstName, ownerLastName, ownerEmail;
     private String pin;
     private ArrayList<Transaction> transactions;
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
     /**
      * Constructor to initialize an Account object.
      */
-    public Account(Bank bank, String accountNumber, String ownerFirstName, String ownerLastName, String ownerEmail, String pin) {
-        this.bank = bank;
-        this.accountNumber = accountNumber;
+    public Account(Bank bank, String accountID, String accountType, String ownerFirstName, String ownerLastName, String ownerEmail, String pin) {
+        this.BankID = bank;
+        this.AccountID = accountID;
+        this.AccountType = accountType;
         this.ownerFirstName = ownerFirstName;
         this.ownerLastName = ownerLastName;
         this.ownerEmail = ownerEmail;
@@ -43,11 +48,14 @@ public abstract class Account {
     }
 
     // Getters and Setters
-    public Bank getBank() { return bank; }
-    public void setBank(Bank bank) { this.bank = bank; }
+    public Bank getBankID() { return BankID; }
+    public void setBankID(Bank bank) { this.BankID = bank; }
 
-    public String getAccountNumber() { return accountNumber; }
-    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+    public String getAccountID() { return AccountID; }
+    public void setAccountID(String accountID) { this.AccountID = accountID; }
+
+    public String getAccountType() { return AccountType; }
+    public void setAccountType(String accountType) { this.AccountType = accountType; }
 
     public String getOwnerFirstName() { return ownerFirstName; }
     public void setOwnerFirstName(String ownerFirstName) { this.ownerFirstName = ownerFirstName; }
@@ -74,26 +82,55 @@ public abstract class Account {
     }
 
     /**
-     * Logs a new transaction for this account.
+     * Logs a new transaction for this account and saves it to the database.
      *
-     * @param accountNumber The account number involved.
+     * @param amount The transaction amount.
      * @param type The type of transaction (e.g., withdrawal, deposit).
      * @param description A brief description of the transaction.
      */
-    public void addNewTransaction(String accountNumber, Transaction type, String description) {
-        // TODO: Complete this method
+    public void addNewTransaction(double amount, String type, String description) {
+        Transaction transaction = new Transaction(AccountID, amount, type, description);
+        transactions.add(transaction);
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:Database/Database.db")) {
+            String sql = "INSERT INTO Transactions (AccountID, Type, Amount, Description, Date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'))";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, AccountID);
+            pstmt.setString(2, type);
+            pstmt.setDouble(3, amount);
+            pstmt.setString(4, description);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Retrieves all logged transactions as a formatted string.
+     * Retrieves all logged transactions from the database.
      *
      * @return A string containing all transaction details.
      */
     public String getTransactionsInfo() {
         StringBuilder info = new StringBuilder();
-        for (Transaction t : transactions) {
-            info.append(t.toString()).append("\n");
+
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:Database/Database.db")) {
+            String sql = "SELECT * FROM Transactions WHERE AccountID = ?";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, AccountID);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                info.append("TransactionID: ").append(rs.getInt("TransactionID"))
+                        .append(", Type: ").append(rs.getString("Type"))
+                        .append(", Amount: ").append(rs.getDouble("Amount"))
+                        .append(", Description: ").append(rs.getString("Description"))
+                        .append(", Date: ").append(rs.getString("Date"))
+                        .append("\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return info.toString();
     }
 
@@ -105,13 +142,14 @@ public abstract class Account {
     @Override
     public String toString() {
         return "Account{" +
-                "Bank=" + bank +
-                ", AccountNumber='" + accountNumber + '\'' +
+                "BankID=" + BankID +
+                ", AccountID='" + AccountID + '\'' +
+                ", AccountType='" + AccountType + '\'' +
                 ", OwnerFirstName='" + ownerFirstName + '\'' +
                 ", OwnerLastName='" + ownerLastName + '\'' +
                 ", OwnerEmail='" + ownerEmail + '\'' +
-                ", pin='" + pin + '\'' +
-                ", Transactions=" + transactions +
+                ", PIN='" + pin + '\'' +
+                ", Transactions=\n" + getTransactionsInfo() +
                 '}';
     }
 }

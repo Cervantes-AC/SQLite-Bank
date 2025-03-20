@@ -22,12 +22,24 @@ import Transactions.*;
 
 public class CreditAccount extends Account implements Payment, Recompense {
     private double loan;
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    public CreditAccount(Bank Bank, String AccountNumber, String OwnerFirstName,
-                         String OwnerLastName, String OwnerEmail, String pin, double loan) {
-        super(Bank, AccountNumber, OwnerFirstName, OwnerLastName, OwnerEmail, pin);
-        this.loan = loan;
+    /**
+     * Constructor to initialize an Account object.
+     *
+     * @param bank
+     * @param accountID
+     * @param accountType
+     * @param ownerFirstName
+     * @param ownerLastName
+     * @param ownerEmail
+     * @param pin
+     */
+    public CreditAccount(Bank bank, String accountID, String accountType, String ownerFirstName, String ownerLastName, String ownerEmail, String pin) {
+        super(bank, accountID, accountType, ownerFirstName, ownerLastName, ownerEmail, pin);
+
     }
+
 
     /**
      * Gets the current loan amount.

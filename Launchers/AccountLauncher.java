@@ -47,7 +47,7 @@ public class AccountLauncher {
     }
 
     /** Sets the session for the logged-in account. */
-    private  static void setLogSession(Account account) {
+    private void setLogSession(Account account) {
         this.loggedAccount = account;
     }
 
