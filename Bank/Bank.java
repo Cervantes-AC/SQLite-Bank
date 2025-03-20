@@ -115,7 +115,7 @@ public class Bank {
 
     // Check if an account exists
     public static boolean accountExists(Bank bank, String accountNum) {
-        String query = "SELECT accountNum FROM Account WHERE accountNum = ? AND bankID = ?";
+        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND ID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, accountNum);

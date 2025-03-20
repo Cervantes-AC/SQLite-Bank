@@ -9,7 +9,7 @@ public class AccountLauncher {
     public void addAccount() {
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Enter Account ID: ");
+        System.out.print("Enter Bank ID: ");
         int bankID = scanner.nextInt();
         scanner.nextLine(); // Consume leftover newline
 

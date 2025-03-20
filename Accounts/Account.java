@@ -15,8 +15,6 @@ public class Account {
     private String lastName;
     private String email;
     private String pin;
-    private double balance = 0.0;
-    private double loan = 0.0;
 
     // Constructor
     public Account(int bankID, String type, String firstName, String lastName, String email, String pin) {
@@ -33,7 +31,7 @@ public class Account {
     public boolean insertAccount(int bankID, String type, String firstName, String lastName, String email, String pin) {
         String url = "jdbc:sqlite:Database/Database.db";
         String sql = """
-                INSERT INTO Account (ID, Type, AccountID, FirstName, LastName, Email, PIN) 
+                INSERT INTO Account (BankID, Type, AccountID, FirstName, LastName, Email, PIN) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
@@ -64,7 +62,7 @@ public class Account {
 
     // Generate Account ID (Type-BankID-XXXX)
     private String generateAccountID() {
-        int randomNum = (int) (20250 + Math.random());
+        int randomNum = (int) (2025 + (0 + Math.random() * 100));
         return String.format("%s-%d-%d", type, bankID, randomNum);
     }
 
@@ -76,12 +74,8 @@ public class Account {
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
     public String getPin() { return pin; }
-    public double getBalance() { return balance; }
-    public double getLoan() { return loan; }
 
     // Setters
-    public void setBalance(double balance) { this.balance = balance; }
-    public void setLoan(double loan) { this.loan = loan; }
 
     // Method to get full name of the account owner
     public String getOwnerFullName() {
@@ -106,8 +100,8 @@ public class Account {
     @Override
     public String toString() {
         return String.format(
-                "Account ID: %s\nName: %s %s\nEmail: %s\nType: %s\nBalance: %.2f\nLoan: %.2f\n------------------------",
-                accountID, firstName, lastName, email, type, balance, loan
+                "Account ID: %s\nName: %s %s\nEmail: %s\nType: %s\n------------------------",
+                accountID, firstName, lastName, email, type
         );
     }
 }

@@ -13,7 +13,7 @@ public class Manager {
                 // Complete SQL statement for creating the Bank, Account, AccountType, and Transactions tables
                 String sql = """
                         CREATE TABLE IF NOT EXISTS Bank (
-                            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            BankID INTEGER PRIMARY KEY AUTOINCREMENT,
                             name TEXT NOT NULL,
                             passcode TEXT NOT NULL,
                             DepositLimit REAL DEFAULT 50000.0,
@@ -23,14 +23,14 @@ public class Manager {
                         );
 
                         CREATE TABLE IF NOT EXISTS Account (
-                            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            BankID INTEGER PRIMARY KEY AUTOINCREMENT,
                             Type TEXT CHECK(Type IN ('SA', 'CA')) NOT NULL,
                             AccountID TEXT UNIQUE NOT NULL,
                             FirstName TEXT NOT NULL,
                             LastName TEXT NOT NULL,
                             Email TEXT NOT NULL,
                             PIN TEXT NOT NULL,
-                            FOREIGN KEY (ID) REFERENCES Bank(ID)
+                            FOREIGN KEY (BankID) REFERENCES Bank(BankID)
                         );
                         
                         CREATE TABLE IF NOT EXISTS Transactions (
