@@ -103,7 +103,7 @@ public class Bank {
         System.out.print("Enter Account ID: ");
         String AccountID = scanner.nextLine();
 
-        String query = "SELECT * FROM Account WHERE AccountID = ? AND ID = ?";
+        String query = "SELECT * FROM Account WHERE AccountID = ? AND BankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, AccountID);
@@ -133,7 +133,7 @@ public class Bank {
     // Check if an account exists
     public static boolean accountExists(Bank bank, String accountNum) {
         // TODO: Complete this method
-        String query = "SELECT accountNum FROM Account WHERE accountNum = ? AND bankID = ?";
+        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND bankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, accountNum);

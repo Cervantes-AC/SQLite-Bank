@@ -35,19 +35,18 @@ public class Main
                 showMenu(2, 1);
                 setOption();
                 // TODO: Complete this portion
-                AccountLauncher.AccountInit();
             }
             // Bank Option
             else if (getOption() == 2)
             {
                 // TODO: Complete Bank option
-                BankLauncher.bankInit();
+
             }
             // Create New Bank
             else if (getOption() == 3)
             {
                 // TODO: Complete this portion...
-                BankLauncher.createNewBank();
+
             }
             else if (getOption() == 4)
             {
