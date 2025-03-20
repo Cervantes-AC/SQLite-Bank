@@ -1,6 +1,8 @@
 package Accounts;
+
 import Bank.Bank;
 import Transactions.*;
+import java.sql.*;
 
 /**
  * CreditAccount Class
@@ -22,58 +24,34 @@ import Transactions.*;
 
 public class CreditAccount extends Account implements Payment, Recompense {
     private double loan;
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    public CreditAccount(Bank Bank, String AccountNumber, String OwnerFirstName,
-                         String OwnerLastName, String OwnerEmail, String pin, double loan) {
-        super(Bank, AccountNumber, OwnerFirstName, OwnerLastName, OwnerEmail, pin);
+    public CreditAccount(Bank bank, String accountNumber, String ownerFirstName,
+                         String ownerLastName, String ownerEmail, String pin, double loan) {
+        super(bank, accountNumber, ownerFirstName, ownerLastName, ownerEmail, pin);
         this.loan = loan;
     }
 
-    /**
-     * Gets the current loan amount.
-     * @return Current loan amount.
-     */
     public double getLoan() {
         return loan;
     }
 
-    /**
-     * Sets a new loan amount.
-     * @param loan The new loan amount to set.
-     */
     public void setLoan(double loan) {
         this.loan = loan;
     }
 
-    /**
-     * Returns the loan statement for this account.
-     * @return String representation of the loan statement.
-     */
     public String getLoanStatement() {
-        return "";
+        return "Loan balance: " + loan;
     }
 
-    /**
-     * Checks if the account can handle a credit transaction without exceeding the loan limit.
-     * @param amountAdjustment The amount to adjust.
-     * @return True if the account can handle the adjustment, false otherwise.
-     */
     private boolean canCredit(double amountAdjustment) {
         return amountAdjustment <= loan;
     }
 
-    /**
-     * Adjusts the loan amount by a specified value. The loan cannot fall below zero.
-     * @param amountAdjustment Amount to adjust the loan by.
-     */
     private void adjustLoanAmount(double amountAdjustment) {
-        loan += amountAdjustment;
+        loan = Math.max(0, loan + amountAdjustment);
     }
 
-    /**
-     * Returns a string representation of this credit account.
-     * @return String representation of the credit account object.
-     */
     @Override
     public String toString() {
         return "CreditAccount{" +
@@ -81,26 +59,50 @@ public class CreditAccount extends Account implements Payment, Recompense {
                 '}';
     }
 
-    /**
-     * Pays an amount to a specified target account. Target account cannot be another CreditAccount.
-     * @param account The target account to receive the payment.
-     * @param amount The amount to pay.
-     * @return True if the payment is successful, false otherwise.
-     * @throws IllegalAccountType Thrown when trying to pay into another CreditAccount.
-     */
     @Override
     public boolean pay(Account account, double amount) throws IllegalAccountType {
+        if (account instanceof CreditAccount) {
+            throw new IllegalAccountType("Cannot pay into another CreditAccount");
+        }
+        if (canCredit(amount)) {
+            adjustLoanAmount(-amount);
+            addNewTransaction("Payment", amount, "Payment to " + account.getFullName());
+
+            try (Connection conn = DriverManager.getConnection(DB_URL)) {
+                String updateLoan = "UPDATE CreditAccount SET Loan = ? WHERE AccountID = ?";
+                try (PreparedStatement pstmt = conn.prepareStatement(updateLoan)) {
+                    pstmt.setDouble(1, loan);
+                    pstmt.setString(2, getAccountNumber());
+                    pstmt.executeUpdate();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return true;
+        }
         return false;
     }
 
-    /**
-     * Recompenses a specified amount of money to the bank, reducing the loan amount.
-     * The recompense amount cannot exceed the current loan.
-     * @param amount Amount to recompense.
-     * @return True if the recompense was successful, false otherwise.
-     */
     @Override
     public boolean recompense(double amount) {
-        return false;
+        if (amount > loan) return false;
+        adjustLoanAmount(-amount);
+        addNewTransaction("Recompense", amount, "Loan recompense");
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String updateLoan = "UPDATE CreditAccount SET Loan = ? WHERE AccountID = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateLoan)) {
+                pstmt.setDouble(1, loan);
+                pstmt.setString(2, getAccountNumber());
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 }

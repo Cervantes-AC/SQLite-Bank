@@ -31,7 +31,7 @@ public class Transaction {
      * @param transactionType The type of transaction.
      * @param description A short description of the transaction.
      */
-    public Transaction(String accountNumber, double amount, String transactionType, String description) {
+    public Transaction(String accountNumber, String amount, double transactionType, String description) {
         this.accountNumber = accountNumber;
         this.amount = amount;
         this.transactionType = TransactionType.valueOf(transactionType.toUpperCase());

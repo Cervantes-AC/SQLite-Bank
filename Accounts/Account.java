@@ -2,6 +2,7 @@ package Accounts;
 
 import Bank.*;
 import Transactions.*;
+import java.sql.*;
 import java.util.ArrayList;
 
 /**
@@ -28,6 +29,8 @@ public abstract class Account {
     private String ownerFirstName, ownerLastName, ownerEmail;
     private String pin;
     private ArrayList<Transaction> transactions;
+
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
     /**
      * Constructor to initialize an Account object.
@@ -74,14 +77,28 @@ public abstract class Account {
     }
 
     /**
-     * Logs a new transaction for this account.
+     * Logs a new transaction for this account and saves it to the database.
      *
-     * @param accountNumber The account number involved.
      * @param type The type of transaction (e.g., withdrawal, deposit).
+     * @param amount The amount of the transaction.
      * @param description A brief description of the transaction.
      */
-    public void addNewTransaction(String accountNumber, Transaction type, String description) {
-        // TODO: Complete this method
+    public void addNewTransaction(String type, double amount, String description) {
+        Transaction transaction = new Transaction(this.accountNumber, type, amount, description);
+        transactions.add(transaction);
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String insertTransaction = "INSERT INTO Transactions(AccountID, Type, Amount, Description) VALUES(?, ?, ?, ?)";
+            try (PreparedStatement pstmt = conn.prepareStatement(insertTransaction)) {
+                pstmt.setString(1, this.accountNumber);
+                pstmt.setString(2, type);
+                pstmt.setDouble(3, amount);
+                pstmt.setString(4, description);
+                pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -91,8 +108,20 @@ public abstract class Account {
      */
     public String getTransactionsInfo() {
         StringBuilder info = new StringBuilder();
-        for (Transaction t : transactions) {
-            info.append(t.toString()).append("\n");
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT * FROM Transactions WHERE AccountID = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, this.accountNumber);
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    info.append("Type: ").append(rs.getString("Type"))
+                            .append(", Amount: ").append(rs.getDouble("Amount"))
+                            .append(", Description: ").append(rs.getString("Description"))
+                            .append("\n");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return info.toString();
     }
