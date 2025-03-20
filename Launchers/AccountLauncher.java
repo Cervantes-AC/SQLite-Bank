@@ -1,73 +1,42 @@
 package Launchers;
 
-import Accounts.*;
-import Bank.*;
-
-/**
- * AccountLauncher Class
- * Manages interactions with the account module.
- *
- * Attributes:
- * - Account loggedAccount: The account object representing the currently logged-in account.
- * - Bank assocBank: The associated bank selected for the account module.
- *
- * Methods:
- * - AccountInit(): Initializes account interactions.
- * - isLoggedIn(): Checks if an account is currently logged in.
- * - accountLogin(): Handles account login after selecting a bank.
- * - selectBank(): Prompts the user to select a bank by ID before login.
- * - setLogSession(Account): Creates a session for the logged-in account.
- * - destroyLogSession(): Ends the current account session.
- * - checkCredentials(String, String): Verifies account number and PIN.
- * - getLoggedAccount(): Returns the currently logged-in account.
- */
+import Accounts.Account;
+import java.util.Scanner;
 
 public class AccountLauncher {
-    private static Account loggedAccount;
-    private static Bank assocBank;
 
-    /** Initializes account interactions */
-    public static void AccountInit() {
-        // TODO: Implement account initialization
-    }
+    // Method to create and add a new account with user input
+    public void addAccount() {
+        Scanner scanner = new Scanner(System.in);
 
-    /** Checks if an account is currently logged in. */
-    private static boolean isLoggedIn() {
-        return loggedAccount != null;
-    }
+        System.out.print("Enter Account ID: ");
+        int bankID = scanner.nextInt();
+        scanner.nextLine(); // Consume leftover newline
 
-    /** Handles the account login process. Requires bank selection first. */
-    public void accountLogin() {
-        // TODO: Implement account login
-    }
+        System.out.print("Enter Account Type (SA/CA): ");
+        String type = scanner.nextLine().toUpperCase();
 
-    /** Prompts the user to select a bank by ID. */
-    private  static Bank selectBank() {
-        return assocBank; // TODO: Implement bank selection
-    }
+        System.out.print("Enter First Name: ");
+        String firstName = scanner.nextLine();
 
-    /** Sets the session for the logged-in account. */
-    private void setLogSession(Account account) {
-        this.loggedAccount = account;
-    }
+        System.out.print("Enter Last Name: ");
+        String lastName = scanner.nextLine();
 
-    /** Ends the current account session. */
-    private static void destroyLogSession() {
-        loggedAccount = null;
-    }
+        System.out.print("Enter Email: ");
+        String email = scanner.nextLine();
 
-    /**
-     * Verifies the account number and PIN.
-     * @param accountNum The account number.
-     * @param pin The 4-digit PIN.
-     * @return Account object if credentials are valid, null otherwise.
-     */
-    public static Account checkCredentials(String accountNum, String pin) {
-        return loggedAccount; // TODO: Implement credential checking
-    }
+        System.out.print("Set Account PIN: ");
+        String pin = scanner.nextLine();
 
-    /** Returns the currently logged-in account. */
-    protected static Account getLoggedAccount() {
-        return loggedAccount;
+
+        // Create the account
+        Account newAccount = new Account(bankID, type, firstName, lastName, email, pin);
+
+        if (newAccount.insertAccount(bankID, type, firstName, lastName, email, pin)) {
+            System.out.println("Account created successfully!");
+            System.out.println(newAccount);
+        } else {
+            System.out.println("Failed to create account.");
+        }
     }
 }
