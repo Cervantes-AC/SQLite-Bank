@@ -61,10 +61,11 @@ public class Account {
         return false;
     }
 
-    // Generate a unique Account ID in the format Type-BankID-XXXX
+
+    // Generate Account ID (Type-BankID-XXXX)
     private String generateAccountID() {
-        int randomNum = (int) (20250 + Math.random() * 10000);
-        return String.format("%s-%d-%04d", type, bankID, randomNum);
+        int randomNum = (int) (20250 + Math.random());
+        return String.format("%s-%d-%d", type, bankID, randomNum);
     }
 
     // Getters
@@ -75,6 +76,12 @@ public class Account {
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
     public String getPin() { return pin; }
+    public double getBalance() { return balance; }
+    public double getLoan() { return loan; }
+
+    // Setters
+    public void setBalance(double balance) { this.balance = balance; }
+    public void setLoan(double loan) { this.loan = loan; }
 
     // Method to get full name of the account owner
     public String getOwnerFullName() {

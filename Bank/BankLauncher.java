@@ -18,13 +18,13 @@ public class BankLauncher {
         // Create a new bank with default limits and fees
         Bank newBank = new Bank(name, passcode);
 
-        // Insert the bank into the database
-        if (newBank.insertBank(newBank)) {
+        // Call the instance method on the new bank object
+        if (newBank.insertBank()) {
             System.out.println("Bank added successfully: " + newBank.getName());
-            System.out.println("Bank ID: " + newBank.getID());
+            System.out.println("Bank ID: " + newBank.getBankID());
 
             // Display the bank’s details
-            newBank.toString();
+            System.out.println(newBank);
         } else {
             System.out.println("Failed to add bank.");
         }

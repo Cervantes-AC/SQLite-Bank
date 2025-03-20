@@ -5,9 +5,9 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Bank {
-    private int ID;
+    private int bankID;
     private String name, passcode;
-    private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 100000.0;
+    private double depositLimit = 50000.0, withdrawLimit = 50000.0, creditLimit = 100000.0;
     private double processingFee = 10.0;
 
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
@@ -32,11 +32,11 @@ public class Bank {
                 Processing Fee: %.2f
                 ------------------------
                 """,
-                ID, name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee);
+                bankID, name, passcode, depositLimit, withdrawLimit, creditLimit, processingFee);
     }
 
     // Insert Bank into SQLite database
-    public boolean insertBank(Bank bank) {
+    public boolean insertBank() {
         String sql = """
             INSERT INTO Bank (name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee) 
             VALUES (?, ?, ?, ?, ?, ?)""";
@@ -44,20 +44,19 @@ public class Bank {
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setString(1, bank.getName());
-            pstmt.setString(2, bank.getPasscode());
-            pstmt.setDouble(3, bank.getDepositLimit());
-            pstmt.setDouble(4, bank.getWithdrawLimit());
-            pstmt.setDouble(5, bank.getCreditLimit());
-            pstmt.setDouble(6, bank.getProcessingFee());
+            pstmt.setString(1, this.name);
+            pstmt.setString(2, this.passcode);
+            pstmt.setDouble(3, this.depositLimit);
+            pstmt.setDouble(4, this.withdrawLimit);
+            pstmt.setDouble(5, this.creditLimit);
+            pstmt.setDouble(6, this.processingFee);
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
                 System.out.println("Bank added successfully!");
                 ResultSet rs = pstmt.getGeneratedKeys();
                 if (rs.next()) {
-                    int newID = rs.getInt(1);
-                    bank.setID(newID);
+                    this.bankID = rs.getInt(1);
                 }
                 return true;
             }
@@ -68,58 +67,49 @@ public class Bank {
         return false;
     }
 
-    // Getters
-    public int getID() { return ID; }
+    // Getters and Setters
+    public int getBankID() { return bankID; }
     public String getName() { return name; }
     public String getPasscode() { return passcode; }
-    public double getDepositLimit() { return DepositLimit; }
-    public double getWithdrawLimit() { return WithdrawLimit; }
-    public double getCreditLimit() { return CreditLimit; }
+    public double getDepositLimit() { return depositLimit; }
+    public double getWithdrawLimit() { return withdrawLimit; }
+    public double getCreditLimit() { return creditLimit; }
     public double getProcessingFee() { return processingFee; }
 
-    // Setters
-    public void setID(int ID) { this.ID = ID; }
+    public void setBankID(int bankID) { this.bankID = bankID; }
     public void setName(String name) { this.name = name; }
     public void setPasscode(String passcode) { this.passcode = passcode; }
-    public void setDepositLimit(double depositLimit) { DepositLimit = depositLimit; }
-    public void setWithdrawLimit(double withdrawLimit) { WithdrawLimit = withdrawLimit; }
-    public void setCreditLimit(double creditLimit) { CreditLimit = creditLimit; }
+    public void setDepositLimit(double depositLimit) { this.depositLimit = depositLimit; }
+    public void setWithdrawLimit(double withdrawLimit) { this.withdrawLimit = withdrawLimit; }
+    public void setCreditLimit(double creditLimit) { this.creditLimit = creditLimit; }
     public void setProcessingFee(double processingFee) { this.processingFee = processingFee; }
 
-
-
-//    public <T extends Account> void showAccounts(Class<T> accountType) {
-//        // TODO: Complete this method
-//}
-
-
-    // Retrieve an account by account number after asking for bank ID
+    // Retrieve an account by account number and bank ID
     public static Account getBankAccount() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter Bank ID: ");
-        int ID = scanner.nextInt();
+        int bankID = scanner.nextInt();
         scanner.nextLine();
 
         System.out.print("Enter Account ID: ");
-        String AccountID = scanner.nextLine();
+        String accountID = scanner.nextLine();
 
         String query = "SELECT * FROM Account WHERE AccountID = ? AND BankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, AccountID);
-            pstmt.setInt(2, ID);
+            pstmt.setString(1, accountID);
+            pstmt.setInt(2, bankID);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
                 System.out.println("Account Found!");
-                // Assuming your Account constructor accepts these parameters
                 return new Account(
-                        rs.getInt("ID"),
-                        rs.getString("Type"),
+                        rs.getInt("BankID"),
+                        rs.getString("AccountType"),
                         rs.getString("FirstName"),
                         rs.getString("LastName"),
                         rs.getString("Email"),
-                        rs.getString("Pin")
+                        rs.getString("PIN")
                 );
             } else {
                 System.out.println("No account found with the given details.");
@@ -132,12 +122,11 @@ public class Bank {
 
     // Check if an account exists
     public static boolean accountExists(Bank bank, String accountNum) {
-        // TODO: Complete this method
-        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND bankID = ?";
+        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND BankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, accountNum);
-            pstmt.setInt(2, bank.getID());
+            pstmt.setInt(2, bank.getBankID());
             ResultSet rs = pstmt.executeQuery();
             return rs.next();
         } catch (SQLException e) {

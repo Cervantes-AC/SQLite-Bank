@@ -45,7 +45,7 @@ public class Update {
                     ResultSet rs = fetchStmt.executeQuery();
                     if (rs.next()) {
                         bank = new Bank(rs.getString("name"), rs.getString("passcode"));
-                        bank.setID(rs.getInt("ID"));
+                        bank.setBankID(rs.getInt("ID"));
                         bank.setDepositLimit(rs.getDouble("DepositLimit"));
                         bank.setWithdrawLimit(rs.getDouble("WithdrawLimit"));
                         bank.setCreditLimit(rs.getDouble("CreditLimit"));
@@ -74,7 +74,7 @@ public class Update {
                 }
 
                 // Prepare SQL statement to update
-                String updateSQL = "UPDATE Bank SET name = ?, passcode = ?, DepositLimit = ?, WithdrawLimit = ?, CreditLimit = ?, processingFee = ? WHERE ID = ?";
+                String updateSQL = "UPDATE Bank SET name = ?, passcode = ?, DepositLimit = ?, WithdrawLimit = ?, CreditLimit = ?, processingFee = ? WHERE BankID = ?";
 
                 try (PreparedStatement pstmt = conn.prepareStatement(updateSQL)) {
                     pstmt.setString(1, bank.getName());
@@ -83,7 +83,7 @@ public class Update {
                     pstmt.setDouble(4, bank.getWithdrawLimit());
                     pstmt.setDouble(5, bank.getCreditLimit());
                     pstmt.setDouble(6, bank.getProcessingFee());
-                    pstmt.setInt(7, bank.getID());
+                    pstmt.setInt(7, bank.getBankID());
 
                     int rowsUpdated = pstmt.executeUpdate();
                     if (rowsUpdated > 0) {

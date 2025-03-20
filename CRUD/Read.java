@@ -46,7 +46,7 @@ public class Read {
                         while (rs.next()) {
                             // Create a Bank object using retrieved data
                             Bank bank = new Bank(rs.getString("name"), rs.getString("passcode"));
-                            bank.setID(rs.getInt("ID"));
+                            bank.setBankID(rs.getInt("ID"));
                             bank.setDepositLimit(rs.getDouble("DepositLimit"));
                             bank.setWithdrawLimit(rs.getDouble("WithdrawLimit"));
                             bank.setCreditLimit(rs.getDouble("CreditLimit"));
@@ -63,7 +63,7 @@ public class Read {
                                     Processing Fee: %.2f
                                     ------------------------------
                                     """,
-                                    bank.getID(),
+                                    bank.getBankID(),
                                     bank.getName(),
                                     bank.getPasscode(),
                                     bank.getDepositLimit(),
