@@ -23,9 +23,9 @@ public class Manager {
                         );
 
                         CREATE TABLE IF NOT EXISTS Account (
-                            BankID INTEGER PRIMARY KEY AUTOINCREMENT,
+                            BankID INTEGER NOT NULL,
                             Type TEXT CHECK(Type IN ('SA', 'CA')) NOT NULL,
-                            AccountID TEXT UNIQUE NOT NULL,
+                            AccountID TEST PRIMARY KEY,
                             FirstName TEXT NOT NULL,
                             LastName TEXT NOT NULL,
                             Email TEXT NOT NULL,
