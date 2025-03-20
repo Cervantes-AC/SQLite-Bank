@@ -1,130 +1,158 @@
 package Bank;
+import Accounts.*;
+import Main.Field;
 
-import Accounts.Account;
-import java.sql.*;
-import java.util.Scanner;
+import java.util.ArrayList;
+
+/**
+ * Bank Class
+ * Represents a bank that manages accounts and enforces transaction limits.
+ *
+ * Attributes:
+ * - int ID: Unique identifier for the bank.
+ * - String name: The bank's name.
+ * - String passcode: Security passcode for bank operations.
+ * - double DepositLimit: Maximum deposit limit per transaction. Defaults to 50,000.0.
+ * - double WithdrawLimit: Maximum withdrawal limit per transaction. Defaults to 50,000.0.
+ * - double CreditLimit: Maximum credit limit per account. Defaults to 100,000.0.
+ * - double processingFee: Fee charged for transactions involving other banks. Defaults to 10.0.
+ * - ArrayList<Account> accounts: List of accounts registered under the bank.
+ *
+ * Methods:
+ * - showAccounts(Class<T>): Displays accounts based on the specified type.
+ * - getBankAccount(Bank, String): Retrieves an account by account number from a specified bank.
+ * - createNewAccount(): Captures user information to create a new account.
+ * - createNewCreditAccount(): Creates a new credit account.
+ * - createNewSavingsAccount(): Creates a new savings account.
+ * - addNewAccount(Account): Adds a new account to the bank.
+ * - accountExists(Bank, String): Checks if an account exists in the bank by account number.
+ */
 
 public class Bank {
     private int ID;
     private String name, passcode;
-    private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 100000.0;
-    private double processingFee = 10.0;
+    private double DepositLimit, WithdrawLimit, CreditLimit;
+    private double processingFee;
+    private ArrayList<Account> accounts;
 
-    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
-
-    // Constructor with default limits
-    public Bank(String name, String passcode) {
+    public Bank(int ID, String name, String passcode) {
+        this.ID = ID;
         this.name = name;
         this.passcode = passcode;
     }
 
-    // Display bank information
-    @Override
-    public String toString() {
-        return String.format("""
-                ------------------------
-                Bank ID: %d
-                Name: %s
-                Passcode: %s
-                Deposit Limit: %.2f
-                Withdraw Limit: %.2f
-                Credit Limit: %.2f
-                Processing Fee: %.2f
-                ------------------------
-                """,
-                ID, name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee);
+    public Bank(int ID, String name, String passcode, double DepositLimit, double WithdrawLimit, double CreditLimit, double processingFee) {
+        this.ID = ID;
+        this.name = name;
+        this.passcode = passcode;
+        this.DepositLimit = 50000.0;
+        this.WithdrawLimit = 50000.0;
+        this.CreditLimit = 100000.0;
+        this.processingFee = 10.0;
+        this.accounts = new ArrayList<>();
     }
 
-    // Insert Bank into SQLite database
-    public boolean insertBank(Bank bank) {
-        String sql = """
-                INSERT INTO Bank (name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee) 
-                VALUES (?, ?, ?, ?, ?, ?)""";
-
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            pstmt.setString(1, bank.getName());
-            pstmt.setString(2, bank.getPasscode());
-            pstmt.setDouble(3, bank.getDepositLimit());
-            pstmt.setDouble(4, bank.getWithdrawLimit());
-            pstmt.setDouble(5, bank.getCreditLimit());
-            pstmt.setDouble(6, bank.getProcessingFee());
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Bank added successfully!");
-                ResultSet rs = pstmt.getGeneratedKeys();
-                if (rs.next()) {
-                    int newID = rs.getInt(1);
-                    bank.setID(newID);
-                }
-                return true;
-            }
-        } catch (SQLException e) {
-            System.out.println("SQLite error: " + e.getMessage());
-        }
-
-        return false;
-    }
-
-    // Getters
+    /** Getters and Setters **/
     public int getID() { return ID; }
-    public String getName() { return name; }
-    public String getPasscode() { return passcode; }
-    public double getDepositLimit() { return DepositLimit; }
-    public double getWithdrawLimit() { return WithdrawLimit; }
-    public double getCreditLimit() { return CreditLimit; }
-    public double getProcessingFee() { return processingFee; }
-
-    // Setters
     public void setID(int ID) { this.ID = ID; }
+
+    public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getPasscode() { return passcode; }
     public void setPasscode(String passcode) { this.passcode = passcode; }
+
+    public double getDepositLimit() { return DepositLimit; }
     public void setDepositLimit(double depositLimit) { DepositLimit = depositLimit; }
+
+    public double getWithdrawLimit() { return WithdrawLimit; }
     public void setWithdrawLimit(double withdrawLimit) { WithdrawLimit = withdrawLimit; }
+
+    public double getCreditLimit() { return CreditLimit; }
     public void setCreditLimit(double creditLimit) { CreditLimit = creditLimit; }
+
+    public double getProcessingFee() { return processingFee; }
     public void setProcessingFee(double processingFee) { this.processingFee = processingFee; }
 
-    // Retrieve an account by account number after asking for bank ID
-    public static Account getBankAccount() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter Bank ID: ");
-        int ID = scanner.nextInt();
-        scanner.nextLine();
+    public ArrayList<Account> getAccounts() { return accounts; }
+    public void setAccounts(ArrayList<Account> accounts) { this.accounts = accounts; }
 
-        System.out.print("Enter Account ID: ");
-        String AccountID = scanner.nextLine();
+    /**
+     * Displays accounts based on the specified type.
+     * @param accountType Type of account to display.
+     */
+    public <T> void showAccounts(Class<T> accountType) {
+        // TODO: Complete this method
+    }
 
-        String query = "SELECT * FROM Account WHERE AccountID = ? AND ID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, AccountID);
-            pstmt.setInt(2, ID);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return new Account(rs.getInt("ID"), rs.getString("type"), rs.getString("firstName"), rs.getString("lastName"), rs.getString("email"), rs.getString("pin"));
-            } else {
-                System.out.println("No account found with the given details.");
-            }
-        } catch (SQLException e) {
-            System.out.println("Error retrieving account: " + e.getMessage());
-        }
+    /**
+     * Retrieves an account by account number from the specified bank.
+     * @param bank Bank to search from.
+     * @param accountNum Account number to find.
+     * @return Account object if found, null otherwise.
+     */
+    public Account getBankAccount(Bank bank, String accountNum) {
+        // TODO: Implement credit recompense processing
         return null;
     }
 
-    // Check if an account exists
-    public static boolean accountExists(Bank bank, String accountNum) {
-        String query = "SELECT AccountID FROM Account WHERE AccountID = ? AND ID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, accountNum);
-            pstmt.setInt(2, bank.getID());
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next();
-        } catch (SQLException e) {
-            System.out.println("Error checking account: " + e.getMessage());
-        }
+    /**
+     * Captures user input to create a new account.
+     * @return ArrayList of Field objects representing the account details.
+     */
+    public ArrayList<Field<String, ?>> createNewAccount() {
+        // TODO: Complete this method
+        return null;
+    }
+
+    /**
+     * Creates a new credit account.
+     * @return New CreditAccount object.
+     */
+    public CreditAccount createNewCreditAccount() {
+        // TODO: Implement credit recompense processing
+        return null;
+    }
+
+    /**
+     * Creates a new savings account.
+     * @return New SavingsAccount object.
+     */
+    public SavingsAccount createNewSavingsAccount() {
+        // TODO: Implement credit recompense processing
+        return null;
+    }
+
+    /**
+     * Adds a new account to the bank if the account number doesn't already exist.
+     * @param account Account object to be added.
+     */
+    public void addNewAccount(Account account) {
+        // TODO: Implement account addition
+    }
+
+    /**
+     * Checks if an account exists in the specified bank by account number.
+     * @param bank Bank to check.
+     * @param accountNum Account number to find.
+     * @return True if the account exists, false otherwise.
+     */
+    public boolean accountExists(Bank bank, String accountNum) {
+        // TODO: Implement credit recompense processing
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Bank{" +
+                "ID=" + ID +
+                ", name='" + name + '\'' +
+                ", passcode='" + passcode + '\'' +
+                ", DepositLimit=" + DepositLimit +
+                ", WithdrawLimit=" + WithdrawLimit +
+                ", CreditLimit=" + CreditLimit +
+                ", processingFee=" + processingFee +
+                ", accounts=" + accounts +
+                '}';
     }
 }

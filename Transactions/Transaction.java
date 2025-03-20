@@ -31,15 +31,4 @@ public class Transaction {
         this.transactionType = transactionType;
         this.description = description;
     }
-
-    public Transactions getTransactionType() {
-        return transactionType;
-    }
-
-
-
-    public String getDescription() {
-        return description;
-    }
-
 }

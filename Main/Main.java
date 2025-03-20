@@ -1,9 +1,8 @@
 package Main;
 
-import java.util.*;
-//import Launchers.*;
+import java.util.Scanner;
+import Launchers.*;
 import Bank.*;
-import Transactions.IllegalAccountType;
 
 public class Main
 {
@@ -20,8 +19,8 @@ public class Main
     public static Field<Integer, Integer> option = new Field<Integer, Integer>("Option",
             Integer.class, -1, new Field.IntegerFieldValidator());
 
-    public static void main(String[] args) throws IllegalAccountType {
-
+    public static void main(String[] args)
+    {
         while (true)
         {
             showMenuHeader("Main Menu");
@@ -37,19 +36,19 @@ public class Main
                 showMenu(2, 1);
                 setOption();
                 // TODO: Complete this portion
-
+                AccountLauncher.AccountInit();
             }
             // Bank Option
             else if (getOption() == 2)
             {
                 // TODO: Complete Bank option
-
+                BankLauncher.bankInit();
             }
             // Create New Bank
             else if (getOption() == 3)
             {
                 // TODO: Complete this portion...
-
+                BankLauncher.createNewBank();
             }
             else if (getOption() == 4)
             {
