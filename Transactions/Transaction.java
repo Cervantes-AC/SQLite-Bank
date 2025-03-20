@@ -31,10 +31,10 @@ public class Transaction {
      * @param transactionType The type of transaction.
      * @param description A short description of the transaction.
      */
-    public Transaction(String accountNumber, String amount, double transactionType, String description) {
+    public Transaction(String accountNumber, String transactionType, double amount, String description) {
         this.accountNumber = accountNumber;
+        this.transactionType = TransactionType.valueOf(transactionType);
         this.amount = amount;
-        this.transactionType = TransactionType.valueOf(transactionType.toUpperCase());
         this.description = description;
         this.date = java.time.LocalDateTime.now().toString();
     }

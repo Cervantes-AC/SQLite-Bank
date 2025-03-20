@@ -4,6 +4,7 @@ import Accounts.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Scanner;
 
 /**
  * BankLauncher Class
@@ -13,6 +14,7 @@ import java.util.Comparator;
  */
 public class BankLauncher {
     private static Bank loggedBank = null;
+    private Scanner input = new Scanner(System.in);
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
     /** Checks if a bank is currently logged in. */
@@ -63,13 +65,20 @@ public class BankLauncher {
     }
 
     /** Creates a new bank record. */
-    public static void createNewBank(String name, String passcode) {
+    public static void createNewBank() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter bank name: ");
+        String name = scanner.nextLine();
+        System.out.print("Enter bank passcode: ");
+        String passcode = scanner.nextLine();
+
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String insertBank = "INSERT INTO Bank(Name, Passcode) VALUES(?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(insertBank)) {
                 pstmt.setString(1, name);
                 pstmt.setString(2, passcode);
                 pstmt.executeUpdate();
+                System.out.println("Bank created successfully!");
             }
         } catch (SQLException e) {
             e.printStackTrace();
