@@ -1,4 +1,5 @@
 package Transactions;
+import Accounts.Account;
 
 public interface Payment {
 

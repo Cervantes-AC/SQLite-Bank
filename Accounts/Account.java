@@ -1,85 +1,86 @@
 package Accounts;
 
-import Bank.*;
-import Transactions.*;
-import java.util.ArrayList;
+import Transactions.Transaction;
 
-/**
- * Account Class
- * An abstract class representing a bank account.
- * Provides basic functionality and tracks account information and transactions.
- *
- * Attributes:
- * - Bank bank: The associated bank object.
- * - String accountNumber: The unique account number.
- * - String ownerFirstName, ownerLastName, ownerEmail: Account owner's personal information.
- * - String pin: The security PIN for this account.
- * - ArrayList<Transaction> transactions: A log of all account transactions.
- *
- * Methods:
- * - getFullName(): Returns the full name of the account owner.
- * - addNewTransaction(): Logs a new transaction.
- * - getTransactionsInfo(): Returns a formatted string of all transaction details.
- * - Various getters and setters for account data.
- */
-public abstract class Account {
-    private Bank bank;
-    private String accountNumber;
-    private String ownerFirstName, ownerLastName, ownerEmail;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class Account {
+    private int bankID;
+    private String type; // SA or CA
+    private String accountID;
+    private String firstName;
+    private String lastName;
+    private String email;
     private String pin;
-    private ArrayList<Transaction> transactions;
+    private double balance = 0.0;
+    private double loan = 0.0;
 
-    /**
-     * Constructor to initialize an Account object.
-     */
-    public Account(Bank bank, String accountNumber, String ownerFirstName, String ownerLastName, String ownerEmail, String pin) {
-        this.bank = bank;
-        this.accountNumber = accountNumber;
-        this.ownerFirstName = ownerFirstName;
-        this.ownerLastName = ownerLastName;
-        this.ownerEmail = ownerEmail;
+    // Constructor
+    public Account(int bankID, String type, String firstName, String lastName, String email, String pin) {
+        this.bankID = bankID;
+        this.type = type;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
         this.pin = pin;
-        this.transactions = new ArrayList<>();
+        this.accountID = generateAccountID();
     }
 
-    // Getters and Setters
-    public Bank getBank() { return bank; }
-    public void setBank(Bank bank) { this.bank = bank; }
+    // Insert Account into SQLite database
+    public boolean insertAccount(int bankID, String type, String firstName, String lastName, String email, String pin) {
+        String url = "jdbc:sqlite:Database/Database.db";
+        String sql = """
+                INSERT INTO Account (BankID, AccountType, AccountID, FirstName, LastName, Email, PIN) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
-    public String getAccountNumber() { return accountNumber; }
-    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-    public String getOwnerFirstName() { return ownerFirstName; }
-    public void setOwnerFirstName(String ownerFirstName) { this.ownerFirstName = ownerFirstName; }
+            pstmt.setInt(1, bankID);
+            pstmt.setString(2, type);
+            pstmt.setString(3, accountID);
+            pstmt.setString(4, firstName);
+            pstmt.setString(5, lastName);
+            pstmt.setString(6, email);
+            pstmt.setString(7, pin);
 
-    public String getOwnerLastName() { return ownerLastName; }
-    public void setOwnerLastName(String ownerLastName) { this.ownerLastName = ownerLastName; }
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Account created successfully!");
+                System.out.println("Account ID: " + accountID);
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("SQLite error: " + e.getMessage());
+        }
 
-    public String getOwnerEmail() { return ownerEmail; }
-    public void setOwnerEmail(String ownerEmail) { this.ownerEmail = ownerEmail; }
+        return false;
+    }
 
+    // Generate a unique Account ID in the format Type-BankID-XXXX
+    private String generateAccountID() {
+        int randomNum = (int) (20250 + Math.random() * 10000);
+        return String.format("%s-%d-%04d", type, bankID, randomNum);
+    }
+
+    // Getters
+    public int getBankID() { return bankID; }
+    public String getType() { return type; }
+    public String getAccountID() { return accountID; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getEmail() { return email; }
     public String getPin() { return pin; }
-    public void setPin(String pin) { this.pin = pin; }
 
-    public ArrayList<Transaction> getTransactions() { return transactions; }
-    public void setTransactions(ArrayList<Transaction> transactions) { this.transactions = transactions; }
-
-    /**
-     * Returns the full name of the account owner.
-     *
-     * @return The full name as "FirstName LastName".
-     */
-    public String getFullName() {
-        return ownerFirstName + " " + ownerLastName;
+    // Method to get full name of the account owner
+    public String getOwnerFullName() {
+        return firstName + " " + lastName;
     }
 
-    /**
-     * Logs a new transaction for this account.
-     *
-     * @param accountNumber The account number involved.
-     * @param type The type of transaction (e.g., withdrawal, deposit).
-     * @param description A brief description of the transaction.
-     */
     public void addNewTransaction(String accountNumber, Transaction type, String description) {
         // TODO: Complete this method
     }
@@ -90,28 +91,16 @@ public abstract class Account {
      * @return A string containing all transaction details.
      */
     public String getTransactionsInfo() {
-        StringBuilder info = new StringBuilder();
-        for (Transaction t : transactions) {
-            info.append(t.toString()).append("\n");
-        }
-        return info.toString();
+        // TODO: Complete this method
+        return "";
     }
 
-    /**
-     * Returns a string representation of the account object.
-     *
-     * @return A string containing account details.
-     */
+    // Display account info
     @Override
     public String toString() {
-        return "Account{" +
-                "Bank=" + bank +
-                ", AccountNumber='" + accountNumber + '\'' +
-                ", OwnerFirstName='" + ownerFirstName + '\'' +
-                ", OwnerLastName='" + ownerLastName + '\'' +
-                ", OwnerEmail='" + ownerEmail + '\'' +
-                ", pin='" + pin + '\'' +
-                ", Transactions=" + transactions +
-                '}';
+        return String.format(
+                "Account ID: %s\nName: %s %s\nEmail: %s\nType: %s\nBalance: %.2f\nLoan: %.2f\n------------------------",
+                accountID, firstName, lastName, email, type, balance, loan
+        );
     }
 }

@@ -57,7 +57,6 @@ public class Manager {
                                           );
                 
                     CREATE TABLE IF NOT EXISTS Transactions (
-                        TransactionID INTEGER PRIMARY KEY AUTOINCREMENT,
                         AccountID TEXT NOT NULL,
                         Type TEXT CHECK(Type IN ('Withdrawal', 'Deposit', 'Fund Transfer', 'Payment', 'Recompense')),
                         Amount REAL NOT NULL,

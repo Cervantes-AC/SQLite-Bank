@@ -1,4 +1,6 @@
 package Transactions;
+import Bank.Bank;
+import Accounts.Account;
 
 public interface FundTransfer{
     /**
