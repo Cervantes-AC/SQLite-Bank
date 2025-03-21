@@ -58,15 +58,17 @@ public class BankLauncher {
      */
     private static void bankMenu() {
         while (isLogged()) {
-            System.out.println("\n1. Show Accounts\n2. Create New Account\n3. Logout");
-            int choice = input.nextInt();
-            input.nextLine();
+            Main.showMenuHeader("Bank Menu");
+            Main.showMenu(31,2);
+            Main.setOption();
 
-            switch (choice) {
+            switch (Main.getOption()) {
                 case 1:
+                    Main.showMenuHeader("View Account Menu");
                     showAccounts();
                     break;
                 case 2:
+                    Main.showMenuHeader("Create Account Menu");
                     newAccount();
                     break;
                 case 3:
@@ -82,7 +84,7 @@ public class BankLauncher {
      * Displays accounts based on the selected type.
      */
     public static void showAccounts() {
-        String query; // Ensure query is initialized
+        String query = "";
         Main.showMenu(32, 2);
         Main.setOption();
 
@@ -99,6 +101,8 @@ public class BankLauncher {
                 Main.showMenuHeader("All Accounts");
                 query = "SELECT * FROM CreditAccount WHERE BankID = ? UNION SELECT * FROM SavingsAccount WHERE BankID = ?";
                 break;
+            case 4:
+                break;
             default:
                 System.out.println("Invalid account type.");
                 return;
@@ -112,11 +116,10 @@ public class BankLauncher {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName"));
-                System.out.println("Account Number: " + rs.getString("AccountID"));
+                System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName") + "-" + rs.getString("AccountID") );
             }
         } catch (SQLException e) {
-            System.out.println("Error displaying accounts: " + e.getMessage());
+            System.out.println("Going back to Bank menu.");
         }
     }
 
