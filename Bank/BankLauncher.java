@@ -15,18 +15,23 @@ public class BankLauncher {
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
     private static final Scanner input = new Scanner(System.in);
 
-    /** Checks if a bank is currently logged in. */
+    /**
+     * Checks if a bank is currently logged in.
+     */
     public static boolean isLogged() {
         return loggedBank != null;
     }
 
-    /** Initializes bank interaction. */
+    /**
+     * Initializes bank interaction.
+     */
     public static void bankInit() {
-        Main.showMenu(3,2);
+        Main.showMenu(3, 2);
         Main.setOption();
 
         switch (Main.getOption()) {
             case 1:
+                ShowRegisteredBank();
                 System.out.print("Enter Bank ID: ");
                 String name = input.nextLine();
                 System.out.print("Enter passcode: ");
@@ -48,7 +53,9 @@ public class BankLauncher {
         }
     }
 
-    /** Menu for logged-in bank operations */
+    /**
+     * Menu for logged-in bank operations
+     */
     private static void bankMenu() {
         while (isLogged()) {
             System.out.println("\n1. Show Accounts\n2. Create New Account\n3. Logout");
@@ -114,8 +121,9 @@ public class BankLauncher {
     }
 
 
-
-    /** Handles creating a new account for the logged-in bank. */
+    /**
+     * Handles creating a new account for the logged-in bank.
+     */
     private static void newAccount() {
         System.out.print("Enter first name: ");
         String firstName = input.nextLine();
@@ -141,8 +149,10 @@ public class BankLauncher {
         }
     }
 
-    /** Handles bank login. */
-    public static void bankLogin(String  bankID, String passcode) {
+    /**
+     * Handles bank login.
+     */
+    public static void bankLogin(String bankID, String passcode) {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -166,13 +176,17 @@ public class BankLauncher {
         }
     }
 
-    /** Ends the current bank session. */
+    /**
+     * Ends the current bank session.
+     */
     private static void logout() {
         loggedBank = null;
         System.out.println("Logged out successfully.");
     }
 
-    /** Creates a new bank record. */
+    /**
+     * Creates a new bank record.
+     */
     public static void createNewBank() {
         System.out.print("Enter bank name: ");
         String name = input.nextLine();
@@ -183,7 +197,9 @@ public class BankLauncher {
         newBank.InsertBank();
     }
 
-    /** Retrieves a bank from the database based on criteria. */
+    /**
+     * Retrieves a bank from the database based on criteria.
+     */
     public static Bank getBank(String name) {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String query = "SELECT * FROM Bank WHERE Name = ?";
@@ -208,7 +224,9 @@ public class BankLauncher {
         return null;
     }
 
-    /** Returns the number of registered banks. */
+    /**
+     * Returns the number of registered banks.
+     */
     public static int bankSize() {
         int count = 0;
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
@@ -220,5 +238,25 @@ public class BankLauncher {
             e.printStackTrace();
         }
         return count;
+    }
+
+    public static void ShowRegisteredBank() {
+        String query;
+        query = "SELECT BankID, Name FROM Bank";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            Main.showMenuHeader("Registered Bank");
+            while (rs.next()) {
+                int bankID = rs.getInt("BankID");
+                String bankName = rs.getString("Name");
+
+                System.out.printf("[%d] %s%n", bankID, bankName);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching registered banks: " + e.getMessage());
+        }
     }
 }
