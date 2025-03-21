@@ -3,7 +3,7 @@ package Bank;
 import Accounts.*;
 import java.sql.*;
 import java.util.Scanner;
-
+import Main.*;
 /**
  * BankLauncher Class
  * Manages interactions with banks and accounts.
@@ -22,18 +22,12 @@ public class BankLauncher {
 
     /** Initializes bank interaction. */
     public static void bankInit() {
-        System.out.println("Welcome to the Bank System!");
-        System.out.println("1. Create New Bank\n2. Login to Existing Bank\n3. Exit");
+        Main.showMenu(3,2);
+        Main.setOption();
 
-        int choice = input.nextInt();
-        input.nextLine(); // Consume newline
-
-        switch (choice) {
+        switch (Main.getOption()) {
             case 1:
-                createNewBank();
-                break;
-            case 2:
-                System.out.print("Enter bank name: ");
+                System.out.print("Enter Bank ID: ");
                 String name = input.nextLine();
                 System.out.print("Enter passcode: ");
                 String passcode = input.nextLine();
@@ -46,7 +40,7 @@ public class BankLauncher {
                     System.out.println("Invalid credentials.");
                 }
                 break;
-            case 3:
+            case 2:
                 System.exit(0);
                 break;
             default:
@@ -77,12 +71,49 @@ public class BankLauncher {
         }
     }
 
-    /** Displays accounts of the logged-in bank, categorized by type. */
-    private static void showAccounts() {
-        System.out.print("Enter account type (Savings/Credit): ");
-        String accountType = input.nextLine();
-        loggedBank.showAccounts(accountType);
+    /**
+     * Displays accounts based on the selected type.
+     */
+    public static void showAccounts() {
+        String query; // Ensure query is initialized
+        Main.showMenu(32, 2);
+        Main.setOption();
+
+        switch (Main.getOption()) {
+            case 1:
+                Main.showMenuHeader("Credit Accounts");
+                query = "SELECT * FROM CreditAccount WHERE BankID = ?";
+                break;
+            case 2:
+                Main.showMenuHeader("Savings Accounts");
+                query = "SELECT * FROM SavingsAccount WHERE BankID = ?";
+                break;
+            case 3:
+                Main.showMenuHeader("All Accounts");
+                query = "SELECT * FROM CreditAccount WHERE BankID = ? UNION SELECT * FROM SavingsAccount WHERE BankID = ?";
+                break;
+            default:
+                System.out.println("Invalid account type.");
+                return;
+        }
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setInt(1, loggedBank.getBankID());
+            if (Main.getOption() == 3) pstmt.setInt(2, loggedBank.getBankID());
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName"));
+                System.out.println("Account Number: " + rs.getString("AccountID"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error displaying accounts: " + e.getMessage());
+        }
     }
+
+
 
     /** Handles creating a new account for the logged-in bank. */
     private static void newAccount() {
@@ -111,11 +142,11 @@ public class BankLauncher {
     }
 
     /** Handles bank login. */
-    public static void bankLogin(String bankName, String passcode) {
+    public static void bankLogin(String  bankID, String passcode) {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Bank WHERE Name = ? AND Passcode = ?";
+            String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, bankName);
+                pstmt.setString(1, bankID);
                 pstmt.setString(2, passcode);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {

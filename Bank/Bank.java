@@ -114,44 +114,13 @@ public class Bank {
         }
     }
 
-    /**
-     * Loads a bank from the database by its ID.
-     * @param bankID The ID of the bank.
-     * @return Bank object if found, null otherwise.
-     */
-    public static Bank LoadBank(int bankID) {
-        String sql = "SELECT * FROM Bank WHERE BankID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, bankID);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return new Bank(
-                        rs.getInt("BankID"),
-                        rs.getString("name"),
-                        rs.getString("passcode"),
-                        rs.getDouble("DepositLimit"),
-                        rs.getDouble("WithdrawLimit"),
-                        rs.getDouble("CreditLimit"),
-                        rs.getDouble("processingFee")
-                );
-            } else {
-                System.out.println("No bank found with ID: " + bankID);
-            }
-        } catch (SQLException e) {
-            System.out.println("Database error: " + e.getMessage());
-        }
-        return null;
-    }
 
     /**
      * Displays accounts based on the specified type.
      * @param accountType Type of account to display.
      */
     public void showAccounts(String accountType) {
-        String query = "SELECT * FROM Account WHERE BankID = ? AND AccountType = ?";
+        String query = "SELECT * FROM SavingsAccount WHERE BankID = ? ";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 

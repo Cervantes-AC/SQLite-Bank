@@ -21,13 +21,6 @@ public class Manager {
                         CreditLimit REAL DEFAULT 100000.0,
                         processingFee REAL DEFAULT 10.0
                     );
-                
-                 CREATE TABLE IF NOT EXISTS Account (
-                        BankID INTEGER NOT NULL,
-                        AccountID TEXT UNIQUE NOT NULL,
-                        AccountType TEXT CHECK(AccountType IN ('Savings', 'Credit')) NOT NULL,
-                        FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
-                    );
 
                     CREATE TABLE IF NOT EXISTS SavingsAccount (
                         BankID INTEGER NOT NULL,
@@ -57,11 +50,13 @@ public class Manager {
                         Amount REAL NOT NULL,
                         Description TEXT,
                         Date TEXT DEFAULT (datetime('now', 'localtime')),
-                        FOREIGN KEY (AccountID) REFERENCES Account(AccountID) ON DELETE CASCADE
+                        FOREIGN KEY (AccountID) REFERENCES SavingsAccount(AccountID) ON DELETE CASCADE,
+                        FOREIGN KEY (AccountID) REFERENCES CreditAccount(AccountID) ON DELETE CASCADE
                     );
 
                     -- Adding indexes for faster lookups
-                    CREATE INDEX IF NOT EXISTS idx_account_email ON Account(AccountID);
+                    CREATE INDEX IF NOT EXISTS idx_account_email ON SavingsAccount(AccountID);
+                    CREATE INDEX IF NOT EXISTS idx_account_email ON CreditAccount(AccountID);
                     CREATE INDEX IF NOT EXISTS idx_transactions_account ON Transactions(AccountID);
                 """;
 
