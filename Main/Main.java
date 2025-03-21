@@ -40,6 +40,7 @@ public class Main
             else if (getOption() == 2)
             {
                 // TODO: Complete Bank option
+                BankLauncher.bankInit();
 
             }
             // Create New Bank

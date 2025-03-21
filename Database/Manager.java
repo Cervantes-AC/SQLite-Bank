@@ -21,28 +21,34 @@ public class Manager {
                         CreditLimit REAL DEFAULT 100000.0,
                         processingFee REAL DEFAULT 10.0
                     );
-
-                    CREATE TABLE IF NOT EXISTS Account (
+                
+                 CREATE TABLE IF NOT EXISTS Account (
                         BankID INTEGER NOT NULL,
-                        AccountType TEXT CHECK(AccountType IN ('SA', 'CA')) NOT NULL,
+                        AccountID TEXT UNIQUE NOT NULL,
+                        AccountType TEXT CHECK(AccountType IN ('Savings', 'Credit')) NOT NULL,
+                        FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
+                    );
+
+                    CREATE TABLE IF NOT EXISTS SavingsAccount (
+                        BankID INTEGER NOT NULL,
                         AccountID TEXT UNIQUE NOT NULL,
                         FirstName TEXT NOT NULL,
                         LastName TEXT NOT NULL,
                         Email TEXT NOT NULL,
                         PIN TEXT NOT NULL,
+                        Balance REAL DEFAULT 0.0,
                         FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
                     );
 
-                    CREATE TABLE IF NOT EXISTS SavingsAccount (
-                        AccountID TEXT UNIQUE NOT NULL,
-                        Balance REAL DEFAULT 0.0,
-                        FOREIGN KEY (AccountID) REFERENCES Account(AccountID) ON DELETE CASCADE
-                    );
-
                     CREATE TABLE IF NOT EXISTS CreditAccount (
+                        BankID INTEGER NOT NULL,
                         AccountID TEXT UNIQUE NOT NULL,
+                        FirstName TEXT NOT NULL,
+                        LastName TEXT NOT NULL,
+                        Email TEXT NOT NULL,
+                        PIN TEXT NOT NULL,
                         Loan REAL DEFAULT 0.0,
-                        FOREIGN KEY (AccountID) REFERENCES Account(AccountID) ON DELETE CASCADE
+                        FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
                     );
 
                     CREATE TABLE IF NOT EXISTS Transactions (
@@ -55,7 +61,7 @@ public class Manager {
                     );
 
                     -- Adding indexes for faster lookups
-                    CREATE INDEX IF NOT EXISTS idx_account_email ON Account(Email);
+                    CREATE INDEX IF NOT EXISTS idx_account_email ON Account(AccountID);
                     CREATE INDEX IF NOT EXISTS idx_transactions_account ON Transactions(AccountID);
                 """;
 

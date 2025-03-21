@@ -2,8 +2,6 @@ package Bank;
 
 import Accounts.*;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Scanner;
 
 /**
@@ -14,8 +12,8 @@ import java.util.Scanner;
  */
 public class BankLauncher {
     private static Bank loggedBank = null;
-    private Scanner input = new Scanner(System.in);
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
+    private static final Scanner input = new Scanner(System.in);
 
     /** Checks if a bank is currently logged in. */
     public static boolean isLogged() {
@@ -24,17 +22,94 @@ public class BankLauncher {
 
     /** Initializes bank interaction. */
     public static void bankInit() {
-        // TODO: COMPLETE THIS METHOD
+        System.out.println("Welcome to the Bank System!");
+        System.out.println("1. Create New Bank\n2. Login to Existing Bank\n3. Exit");
+
+        int choice = input.nextInt();
+        input.nextLine(); // Consume newline
+
+        switch (choice) {
+            case 1:
+                createNewBank();
+                break;
+            case 2:
+                System.out.print("Enter bank name: ");
+                String name = input.nextLine();
+                System.out.print("Enter passcode: ");
+                String passcode = input.nextLine();
+                bankLogin(name, passcode);
+
+                if (loggedBank != null) {
+                    System.out.println("Successfully logged in!");
+                    bankMenu();
+                } else {
+                    System.out.println("Invalid credentials.");
+                }
+                break;
+            case 3:
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid option. Try again.");
+                break;
+        }
+    }
+
+    /** Menu for logged-in bank operations */
+    private static void bankMenu() {
+        while (isLogged()) {
+            System.out.println("\n1. Show Accounts\n2. Create New Account\n3. Logout");
+            int choice = input.nextInt();
+            input.nextLine();
+
+            switch (choice) {
+                case 1:
+                    showAccounts();
+                    break;
+                case 2:
+                    newAccount();
+                    break;
+                case 3:
+                    logout();
+                    break;
+                default:
+                    System.out.println("Invalid option.");
+                    break;
+            }
+        }
     }
 
     /** Displays accounts of the logged-in bank, categorized by type. */
     private static void showAccounts() {
-        // TODO: Implement account display with DB support
+        System.out.print("Enter account type (Savings/Credit): ");
+        String accountType = input.nextLine();
+        loggedBank.showAccounts(accountType);
     }
 
     /** Handles creating a new account for the logged-in bank. */
     private static void newAccount() {
-        // TODO: Implement new account creation with DB support
+        System.out.print("Enter first name: ");
+        String firstName = input.nextLine();
+        System.out.print("Enter last name: ");
+        String lastName = input.nextLine();
+        System.out.print("Enter email: ");
+        String email = input.nextLine();
+        System.out.print("Enter PIN: ");
+        String pin = input.nextLine();
+
+        System.out.print("Enter account type (Savings/Credit): ");
+        String type = input.nextLine();
+
+        try {
+            Account newAccount = new Account(loggedBank.getBankID, type, firstName, lastName, email, pin);
+            if (newAccount.insertAccount()) {
+                System.out.println("Account created successfully!");
+            } else {
+                System.out.println("Failed to create account.");
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     /** Handles bank login. */
@@ -54,23 +129,18 @@ public class BankLauncher {
         }
     }
 
-    /** Sets the current logged-in bank. */
-    private static void setLogSession(Bank b) {
-        loggedBank = b;
-    }
-
     /** Ends the current bank session. */
     private static void logout() {
         loggedBank = null;
+        System.out.println("Logged out successfully.");
     }
 
     /** Creates a new bank record. */
     public static void createNewBank() {
-        Scanner scanner = new Scanner(System.in);
         System.out.print("Enter bank name: ");
-        String name = scanner.nextLine();
+        String name = input.nextLine();
         System.out.print("Enter bank passcode: ");
-        String passcode = scanner.nextLine();
+        String passcode = input.nextLine();
 
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String insertBank = "INSERT INTO Bank(Name, Passcode) VALUES(?, ?)";
@@ -79,20 +149,6 @@ public class BankLauncher {
                 pstmt.setString(2, passcode);
                 pstmt.executeUpdate();
                 System.out.println("Bank created successfully!");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /** Displays a menu of all registered banks. */
-    public static void showBanksMenu() {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Bank";
-            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-                while (rs.next()) {
-                    System.out.println("ID: " + rs.getInt("ID") + ", Name: " + rs.getString("Name"));
-                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
