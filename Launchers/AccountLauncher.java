@@ -1,73 +1,92 @@
-//package Launchers;
-//
-//import Accounts.*;
-//import Bank.*;
-//
-///**
-// * AccountLauncher Class
-// * Manages interactions with the account module.
-// *
-// * Attributes:
-// * - Account loggedAccount: The account object representing the currently logged-in account.
-// * - Bank assocBank: The associated bank selected for the account module.
-// *
-// * Methods:
-// * - AccountInit(): Initializes account interactions.
-// * - isLoggedIn(): Checks if an account is currently logged in.
-// * - accountLogin(): Handles account login after selecting a bank.
-// * - selectBank(): Prompts the user to select a bank by ID before login.
-// * - setLogSession(Account): Creates a session for the logged-in account.
-// * - destroyLogSession(): Ends the current account session.
-// * - checkCredentials(String, String): Verifies account number and PIN.
-// * - getLoggedAccount(): Returns the currently logged-in account.
-// */
-//
-//public class AccountLauncher {
-//    private static Account loggedAccount;
-//    private static Bank assocBank;
-//
-//    /** Initializes account interactions */
-//    public static void AccountInit() {
-//        // TODO: Implement account initialization
-//    }
-//
-//    /** Checks if an account is currently logged in. */
-//    private static boolean isLoggedIn() {
-//        return loggedAccount != null;
-//    }
-//
-//    /** Handles the account login process. Requires bank selection first. */
-//    public void accountLogin() {
-//        // TODO: Implement account login
-//    }
-//
-//    /** Prompts the user to select a bank by ID. */
-//    private  static Bank selectBank() {
-//        return assocBank; // TODO: Implement bank selection
-//    }
-//
-//    /** Sets the session for the logged-in account. */
-//    private void setLogSession(Account account) {
-//        this.loggedAccount = account;
-//    }
-//
-//    /** Ends the current account session. */
-//    private static void destroyLogSession() {
-//        loggedAccount = null;
-//    }
-//
-//    /**
-//     * Verifies the account number and PIN.
-//     * @param accountNum The account number.
-//     * @param pin The 4-digit PIN.
-//     * @return Account object if credentials are valid, null otherwise.
-//     */
-//    public static Account checkCredentials(String accountNum, String pin) {
-//        return loggedAccount; // TODO: Implement credential checking
-//    }
-//
-//    /** Returns the currently logged-in account. */
-//    protected static Account getLoggedAccount() {
-//        return loggedAccount;
-//    }
-//}
+package Launchers;
+
+import Accounts.*;
+import Transactions.IllegalAccountType;
+import java.sql.*;
+import java.util.Scanner;
+
+public class AccountLauncher {
+    protected static Account loggedAccount;
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
+
+    public static void AccountInit() throws IllegalAccountType {
+        System.out.println("Welcome to the Banking System!");
+
+        while (true) {
+            System.out.print("Enter Account ID: ");
+            String accountID = scanner.nextLine().trim();
+
+            System.out.print("Enter Account Passcode: ");
+            String passcode = scanner.nextLine().trim();
+
+            Account account = authenticateAccount(accountID, passcode);
+
+            if (account != null) {
+                setLogSession(account);
+                System.out.println("\nLogin successful!");
+
+                if (account instanceof CreditAccount) {
+                    CreditAccountLauncher.creditAccountInit();
+                } else if (account instanceof SavingsAccount) {
+                    SavingsAccountLauncher.savingsAccountInit();
+                } else {
+                    System.out.println("Unknown account type. Logging out...");
+                    destroyLogSession();
+                }
+                break;
+            } else {
+                System.out.println("Login failed. Invalid credentials. Try again.");
+            }
+        }
+    }
+
+    private static Account authenticateAccount(String accountID, String passcode) {
+        String sqlSavings = "SELECT * FROM SavingsAccount WHERE AccountID = ? AND PIN = ?";
+        String sqlCredit = "SELECT * FROM CreditAccount WHERE AccountID = ? AND PIN = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmtSavings = conn.prepareStatement(sqlSavings);
+             PreparedStatement pstmtCredit = conn.prepareStatement(sqlCredit)) {
+
+            // Check if it's a Savings Account
+            pstmtSavings.setString(1, accountID);
+            pstmtSavings.setString(2, passcode);
+            try (ResultSet rs = pstmtSavings.executeQuery()) {
+                if (rs.next()) {
+                    return new SavingsAccount(accountID);  // Uses SavingsAccount constructor
+                }
+            }
+
+            // Check if it's a Credit Account
+            pstmtCredit.setString(1, accountID);
+            pstmtCredit.setString(2, passcode);
+            try (ResultSet rs = pstmtCredit.executeQuery()) {
+                if (rs.next()) {
+                    return new CreditAccount(accountID);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Database error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private static void setLogSession(Account account) {
+        loggedAccount = account;
+    }
+
+    public static Account getLoggedAccount() {
+        return loggedAccount;
+    }
+
+    public static void destroyLogSession() {
+        loggedAccount = null;
+        System.out.println("Successfully logged out.");
+    }
+
+    public static boolean isLoggedIn() {
+        return loggedAccount != null;
+    }
+}

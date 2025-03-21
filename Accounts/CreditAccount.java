@@ -1,9 +1,7 @@
 package Accounts;
 
-import Bank.Bank;
 import Transactions.*;
 import java.sql.*;
-import java.util.Scanner;
 
 /**
  * CreditAccount Class
@@ -12,34 +10,24 @@ import java.util.Scanner;
  */
 public class CreditAccount extends Account implements Payment, Recompense {
     private double loan;
+    private double creditLimit;
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
-    private static final Scanner input = new Scanner(System.in);
 
-    public CreditAccount(int bankID, String firstName, String lastName, String email, String pin, double initialLoan) {
+    // Constructor for a new Credit Account
+    public CreditAccount(int bankID, String firstName, String lastName, String email, String pin, double loan) {
         super(bankID, "Credit", firstName, lastName, email, pin);
-        this.loan = initialLoan;
+        this.loan = Math.max(0, loan); // Ensure loan is non-negative
+        this.creditLimit = getCreditLimitFromDatabase(bankID); // Fetch credit limit
     }
 
-    /**
-     * Creates a new CreditAccount with an initial loan amount and inserts it into the database.
-     */
-    public static CreditAccount createCreditAccount(int bankID, String firstName, String lastName, String email, String pin) {
-        System.out.print("Enter initial loan amount: ");
-        double initialLoan;
+    // Constructor for retrieving an existing Credit Account from the database
+    public CreditAccount(String accountID) {
+        super(getBankIDFromDatabase(accountID), "Credit", "", "", "", "");
+        this.setAccountID(accountID);
+        loadCreditAccountDetails(accountID);
 
-        // Handle bad input gracefully
-        try {
-            initialLoan = Double.parseDouble(input.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid loan amount. Defaulting to 0.");
-            initialLoan = 0;
-        }
-
-        // Create a new CreditAccount object
-        CreditAccount newAccount = new CreditAccount(bankID, firstName, lastName, email, pin, initialLoan);
-
-        // Try inserting into the database
-        return newAccount.insertAccount("CreditAccount", "Loan", initialLoan) ? newAccount : null;
+        // ✅ Fetch credit limit from database instead of using `Bank.getBankByID()`
+        this.creditLimit = getCreditLimitFromDatabase(getBankID());
     }
 
     public double getLoan() {
@@ -48,35 +36,137 @@ public class CreditAccount extends Account implements Payment, Recompense {
 
     public void setLoan(double loan) {
         this.loan = Math.max(0, loan); // Prevent negative loan values
+        updateLoanInDatabase();
     }
 
     public String getLoanStatement() {
-        return "Loan balance: " + loan;
+        return "Loan balance: $" + loan;
     }
 
-    /**
-     * Checks if the account has enough loan balance for a credit transaction.
-     */
-    private boolean canCredit(double amountAdjustment) {
-        return amountAdjustment <= loan;
+    private boolean canCredit(double amount) {
+        return (loan + amount) <= creditLimit;
     }
 
-    /**
-     * Adjusts the loan balance (e.g., after a transaction).
-     */
-    private void adjustLoanAmount(double amountAdjustment) {
-        loan = Math.max(0, loan + amountAdjustment);
+    private void adjustLoanAmount(double amount) {
+        loan = Math.max(0, loan + amount);
+        updateLoanInDatabase();
     }
 
     @Override
     public boolean pay(Account account, double amount) throws IllegalAccountType {
-        // Placeholder logic — expand this later
-        return false;
+        if (amount <= 0) {
+            System.out.println("Invalid payment amount.");
+            return false;
+        }
+
+        if (loan == 0) {
+            System.out.println("No loan balance to pay.");
+            return false;
+        }
+
+        if (amount > loan) {
+            System.out.println("Payment exceeds loan balance. Adjusting to full repayment.");
+            amount = loan;
+        }
+
+        adjustLoanAmount(-amount); // Reduce loan
+        addNewTransaction("Payment", amount, "Loan repayment");
+        return true;
     }
 
     @Override
     public boolean recompense(double amount) {
-        // Placeholder logic — expand this later
-        return false;
+        if (amount <= 0) {
+            System.out.println("Invalid recompense amount.");
+            return false;
+        }
+
+        if (!canCredit(amount)) {
+            System.out.println("Recompense failed: Exceeds credit limit of $" + creditLimit);
+            return false;
+        }
+
+        System.out.println("Taking an additional loan of: $" + amount);
+        adjustLoanAmount(amount);
+        addNewTransaction("Recompense", amount, "Loan recompense");
+        return true;
+    }
+
+    private boolean updateLoanInDatabase() {
+        String sql = "UPDATE CreditAccount SET Loan = ? WHERE AccountID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setDouble(1, loan);
+            pstmt.setString(2, getAccountID());
+            int rowsUpdated = pstmt.executeUpdate();
+            return rowsUpdated > 0;
+        } catch (SQLException e) {
+            System.out.println("Error updating loan balance: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void loadCreditAccountDetails(String accountID) {
+        String sql = "SELECT * FROM CreditAccount WHERE AccountID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, accountID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                this.setFirstName(rs.getString("FirstName"));
+                this.setLastName(rs.getString("LastName"));
+                this.setEmail(rs.getString("Email"));
+                this.setPin(rs.getString("PIN"));
+                this.loan = rs.getDouble("Loan");
+            } else {
+                System.out.println("Account not found.");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error loading CreditAccount details: " + e.getMessage());
+        }
+    }
+
+    private static int getBankIDFromDatabase(String accountID) {
+        String sql = "SELECT BankID FROM CreditAccount WHERE AccountID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, accountID);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() ? rs.getInt("BankID") : -1;
+        } catch (SQLException e) {
+            System.out.println("Error fetching BankID: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    // ✅ Fetch credit limit from the database
+    private static double getCreditLimitFromDatabase(int bankID) {
+        String sql = "SELECT CreditLimit FROM Bank WHERE BankID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, bankID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("CreditLimit");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching credit limit: " + e.getMessage());
+        }
+        return 0; // Default if bank is not found
+    }
+
+    @Override
+    public String toString() {
+        return "CreditAccount{" +
+                "loan=" + loan +
+                ", accountID='" + getAccountID() + '\'' +
+                ", fullName='" + getOwnerFullName() + '\'' +
+                '}';
     }
 }

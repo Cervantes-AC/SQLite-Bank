@@ -12,7 +12,7 @@ public class Bank {
     private int BankID;
     private String name, passcode;
     private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 10000.0;
-    private double processingFee;
+    private double processingFee = 10.0;
 
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
@@ -114,15 +114,11 @@ public class Bank {
         }
     }
 
-
-
-    /**
-     * Checks if an account exists in this bank.
-     *
-     * @param accountNum The account number to search for.
-     * @return True if the account exists, false otherwise.
-     */
-    public boolean findAccount(String accountNum) {
-        return getAccount(accountNum) != null;
+    @Override
+    public String toString() {
+        return "Bank{" +
+                "ID=" + BankID +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

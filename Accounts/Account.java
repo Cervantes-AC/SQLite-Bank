@@ -1,22 +1,20 @@
 package Accounts;
 
+import Transactions.Transaction;
 import java.sql.*;
 
-/**
- * Base Account Class - Handles common attributes and behaviors for Savings and Credit accounts.
- */
-public abstract class Account {
-    protected int bankID;
-    protected String type; // Savings or Credit
-    protected String accountID;
-    protected String firstName;
-    protected String lastName;
-    protected String email;
-    protected String pin;
+public class Account {
+    private int bankID;
+    private String type; // Savings or Credit
+    private String accountID;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String pin;
 
-    protected static final String DB_URL = "jdbc:sqlite:Database/Database.db";
+    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    // Constructor for creating a new account
+    // Constructor
     public Account(int bankID, String type, String firstName, String lastName, String email, String pin) {
         this.bankID = bankID;
         this.type = validateAccountType(type);
@@ -26,6 +24,30 @@ public abstract class Account {
         this.email = email;
         this.pin = pin;
     }
+    // Getters
+    public int getBankID() { return bankID; }
+    public String getType() { return type; }
+    public String getAccountID() { return accountID; }
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public String getEmail() { return email; }
+    public String getPin() { return pin; }
+
+    //Setters
+    public void setBankID(int bankID) { this.bankID = bankID; }
+    public void setType(String Type) { this.type = Type; }
+    public void setAccountID(String accountID) { this.accountID = accountID; }
+    public void setFirstName(String FirstName) { this.firstName = FirstName; }
+    public void setLastName(String LastName) { this.lastName = LastName; }
+    public void setEmail(String Email) { this.email = Email; }
+    public void setPin(String Pin) { this.pin = Pin; }
+
+
+    // Method to get full name of the account owner
+    public String getOwnerFullName() {
+        return firstName + " " + lastName;
+    }
+
 
     // Ensure the account type is either Savings or Credit
     private String validateAccountType(String type) {
@@ -35,23 +57,28 @@ public abstract class Account {
         throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
     }
 
-    /**
-     * Inserts the account into the appropriate table (SavingsAccount or CreditAccount).
-     *
-     * @param table         The target table ("SavingsAccount" or "CreditAccount").
-     * @param balanceColumn  The column to store balance or loan ("Balance" or "Loan").
-     * @param defaultValue   The initial value (e.g., starting balance or loan amount).
-     * @return true if insertion is successful, false otherwise.
-     */
-    public boolean insertAccount(String table, String balanceColumn, double defaultValue) {
-        String sql = String.format(
-                "INSERT INTO %s (BankID, AccountID, FirstName, LastName, Email, PIN, %s) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                table, balanceColumn);
+    // Insert Account into SQLite database (handles Savings and Credit properly)
+    public boolean insertAccount() {
+        String table;
+        String sql;
+        double defaultValue = 0.0;
+
+        // Determine table, SQL statement, and default value
+        if (type.equalsIgnoreCase("Savings")) {
+            table = "SavingsAccount";
+            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Balance) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        } else if (type.equalsIgnoreCase("Credit")) {
+            table = "CreditAccount";
+            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Loan) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        } else {
+            System.out.println("Invalid account type.");
+            return false;
+        }
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            // Set account details
+            // Set the common fields
             pstmt.setInt(1, bankID);
             pstmt.setString(2, accountID);
             pstmt.setString(3, firstName);
@@ -59,7 +86,7 @@ public abstract class Account {
             pstmt.setString(5, email);
             pstmt.setString(6, pin);
 
-            // Set default Balance/Loan value
+            // Set Balance or Loan to 0.0 by default
             pstmt.setDouble(7, defaultValue);
 
             int rowsAffected = pstmt.executeUpdate();
@@ -71,18 +98,17 @@ public abstract class Account {
         } catch (SQLException e) {
             System.out.println("SQLite error: " + e.getMessage());
         }
+
         return false;
     }
 
-    /**
-     * Generates a unique account ID for the account (e.g., SA01-BankID or CA02-BankID).
-     *
-     * @return The generated account ID string.
-     */
+
+    // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
         String prefix = type.equalsIgnoreCase("Savings") ? "SA" : "CA";
         int count = 1;
 
+        // Fetch the current count of accounts for this bank and type
         String table = type.equalsIgnoreCase("Savings") ? "SavingsAccount" : "CreditAccount";
         String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
 
@@ -92,49 +118,66 @@ public abstract class Account {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                count = rs.getInt("count") + 1; // Increment for the next account
+                count = rs.getInt("count") + 1;  // Increment for the next account
             }
 
         } catch (SQLException e) {
             System.out.println("Failed to generate account ID: " + e.getMessage());
         }
 
-        // Format: SA01-BankID or CA01-BankID
+        // Format it as SA01-BankID or CA01-BankID
         return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
-    // Getters for account info
 
-    public int getBankID() {
-        return bankID;
+    // Logs a new transaction and saves it to the database
+    public void addNewTransaction(String transactionType, double amount, String description) {
+        String sql = "INSERT INTO Transactions (AccountID, Type, Amount, Description) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, this.accountID);
+            pstmt.setString(2, transactionType);
+            pstmt.setDouble(3, amount);
+            pstmt.setString(4, description);
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Failed to add transaction: " + e.getMessage());
+        }
     }
 
-    public String getType() {
-        return type;
+    // Fetch transaction history for the account
+    public String getTransactionsInfo() {
+        StringBuilder info = new StringBuilder();
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT * FROM Transactions WHERE AccountID = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, this.accountID);
+                ResultSet rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    info.append("Type: ").append(rs.getString("Type"))
+                            .append(", Amount: ").append(rs.getDouble("Amount"))
+                            .append(", Description: ").append(rs.getString("Description"))
+                            .append(", Date: ").append(rs.getString("Date"))
+                            .append("\n");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to fetch transactions: " + e.getMessage());
+        }
+        return info.toString();
     }
 
-    public String getAccountID() {
-        return accountID;
+    @Override
+    public String toString() {
+        return "Account{" +
+                "BankID=" + bankID +
+                ", AccountID='" + accountID + '\'' +
+                ", FirstName='" + firstName + '\'' +
+                ", LastName='" + lastName + '\'' +
+                ", Email='" + email + '\'' +
+                '}';
     }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-
-    public String getPin() {
-        return pin;
-    }
-
 }

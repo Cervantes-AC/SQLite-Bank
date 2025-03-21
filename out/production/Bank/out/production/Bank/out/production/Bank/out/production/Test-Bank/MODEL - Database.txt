@@ -1,0 +1,42 @@
+MODEL - Database
+
+Bank :
+	1. ID - KEY
+	2. NAME
+	3. PIN
+	4. Deposit Limit
+	5. Withdraw Limit
+	6. Credit Limit
+	7. Processing Fee
+Account:
+	1. ID - REFERENCE KEY (BANK)
+	2. TYPE - PRIMARY KEY (SA or CA) 
+	3. Account ID (AUTO-GENERATED SAMPLE "BDO Bank siya nga ang bank ID is 777" and atong pag format kay (SA - 777 - 1001)
+	4. First Name
+	5. Last Name
+	6. Email
+	7. pin
+
+Account Type:
+	1. SA - Savings
+		1. Balance
+	
+	2. CA - Credit
+		1. Loan
+
+Transactions:
+	1. SA 
+		- Withdrawal
+		- Deposit
+		- Fund Transfer
+	2. CA
+		- Payment
+		- Recompense
+
+VIEW - User Interface
+
+
+CONTROLLER - Model control
+
+
+SERVICES - Methods

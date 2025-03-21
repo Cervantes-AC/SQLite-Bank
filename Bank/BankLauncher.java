@@ -58,17 +58,15 @@ public class BankLauncher {
      */
     private static void bankMenu() {
         while (isLogged()) {
-            Main.showMenuHeader("Bank Menu");
-            Main.showMenu(31,2);
-            Main.setOption();
+            System.out.println("\n1. Show Accounts\n2. Create New Account\n3. Logout");
+            int choice = input.nextInt();
+            input.nextLine();
 
-            switch (Main.getOption()) {
+            switch (choice) {
                 case 1:
-                    Main.showMenuHeader("View Account Menu");
                     showAccounts();
                     break;
                 case 2:
-                    Main.showMenuHeader("Create Account Menu");
                     newAccount();
                     break;
                 case 3:
@@ -84,7 +82,7 @@ public class BankLauncher {
      * Displays accounts based on the selected type.
      */
     public static void showAccounts() {
-        String query = "";
+        String query; // Ensure query is initialized
         Main.showMenu(32, 2);
         Main.setOption();
 
@@ -101,8 +99,6 @@ public class BankLauncher {
                 Main.showMenuHeader("All Accounts");
                 query = "SELECT * FROM CreditAccount WHERE BankID = ? UNION SELECT * FROM SavingsAccount WHERE BankID = ?";
                 break;
-            case 4:
-                break;
             default:
                 System.out.println("Invalid account type.");
                 return;
@@ -116,10 +112,11 @@ public class BankLauncher {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName") + "-" + rs.getString("AccountID") );
+                System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName"));
+                System.out.println("Account Number: " + rs.getString("AccountID"));
             }
         } catch (SQLException e) {
-            System.out.println("Going back to Bank menu.");
+            System.out.println("Error displaying accounts: " + e.getMessage());
         }
     }
 
@@ -140,72 +137,62 @@ public class BankLauncher {
         System.out.print("Enter account type (Savings/Credit): ");
         String type = input.nextLine();
 
-        Account newAccount = null;
-
+        System.out.print("Enter account type (Savings/Credit): ");
+        String amount = input.nextLine();
         try {
-            if (type.equalsIgnoreCase("Savings")) {
-                newAccount = SavingsAccount.createSavingsAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
-            } else if (type.equalsIgnoreCase("Credit")) {
-                newAccount = CreditAccount.createCreditAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
+            Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
+            if (newAccount.insertAccount()) {
+                System.out.println("Account created successfully!");
             } else {
-                throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
+                System.out.println("Failed to create account.");
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 
-
     /**
      * Handles bank login.
-     * Authenticates a bank using its ID and passcode, then initializes the logged-in bank.
-     *
-     * @param bankID   The ID of the bank.
-     * @param passcode The bank's passcode.
      */
     public static void bankLogin(String bankID, String passcode) {
-        String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, bankID);
+                pstmt.setString(2, passcode);
+                ResultSet rs = pstmt.executeQuery();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+                if (rs.next()) {
+                    loggedBank = new Bank(
+                            rs.getInt("BankID"),
+                            rs.getString("Name"),
+                            rs.getString("Passcode"),
+                            rs.getDouble("DepositLimit"),
+                            rs.getDouble("WithdrawLimit"),
+                            rs.getDouble("CreditLimit"),
+                            rs.getDouble("processingFee")
+                    );
 
-            // Set query parameters
-            pstmt.setString(1, bankID);
-            pstmt.setString(2, passcode);
-            ResultSet rs = pstmt.executeQuery();
-
-            // Check if bank exists
-            if (rs.next()) {
-                // Create a logged-in bank instance
-                loggedBank = new Bank(
-                        rs.getInt("BankID"),
-                        rs.getString("Name"),
-                        rs.getString("Passcode"),
-                        rs.getDouble("DepositLimit"),
-                        rs.getDouble("WithdrawLimit"),
-                        rs.getDouble("CreditLimit"),
-                        rs.getDouble("processingFee")
-                );
-
-                System.out.println("Successfully logged into Bank: " + loggedBank.getName());
-            } else {
-                System.out.println("Login failed! Invalid Bank ID or Passcode.");
+                    // ✅ Set the logged-in bank ID
+                    loggedInBankID = rs.getInt("BankID");
+                    System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
+                } else {
+                    System.out.println("Login failed! Invalid Bank ID or Passcode.");
+                }
             }
-
         } catch (SQLException e) {
             System.out.println("Database error: " + e.getMessage());
         }
     }
-
 
     /**
      * Ends the current bank session.
      */
     private static void logout() {
         loggedBank = null;
+        loggedInBankID = -1; // Reset logged-in Bank ID
         System.out.println("Logged out successfully.");
     }
-
     /**
      * Creates a new bank record.
      */
@@ -281,7 +268,5 @@ public class BankLauncher {
             System.out.println("Error fetching registered banks: " + e.getMessage());
         }
     }
-
-
+    public static int loggedInBankID = -1; // Default to -1 (not logged in)
 }
-
