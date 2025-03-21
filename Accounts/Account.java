@@ -61,20 +61,32 @@ public class Account {
         return false;
     }
 
-    // Generate Account ID (Type-BankID-XXXX)
+    // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
-        int randomNum = (int) (Math.random() * 9000 + 1000); // Generates a 4-digit number
-        return String.format("%s-%d-%d", type, bankID, randomNum);
+        String prefix = type.equalsIgnoreCase("Savings") ? "SA" : "CA";
+        int count = 1;
+
+        // Fetch the current count of accounts for this bank and type
+        String table = type.equalsIgnoreCase("Savings") ? "SavingsAccount" : "CreditAccount";
+        String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, bankID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                count = rs.getInt("count") + 1;  // Increment for the next account
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Failed to generate account ID: " + e.getMessage());
+        }
+
+        // Format it as SA01-BankID or CA01-BankID
+        return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
-    // Getters
-    public int getBankID() { return bankID; }
-    public String getType() { return type; }
-    public String getAccountID() { return accountID; }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
 
     // Logs a new transaction and saves it to the database
     public void addNewTransaction(String transactionType, double amount, String description) {
@@ -94,6 +106,7 @@ public class Account {
         }
     }
 
+    // Fetch transaction history for the account
     public String getTransactionsInfo() {
         StringBuilder info = new StringBuilder();
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
@@ -110,7 +123,7 @@ public class Account {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Failed to fetch transactions: " + e.getMessage());
         }
         return info.toString();
     }
