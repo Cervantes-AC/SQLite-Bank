@@ -163,6 +163,7 @@ public class BankLauncher {
                 pstmt.setString(1, bankID);
                 pstmt.setString(2, passcode);
                 ResultSet rs = pstmt.executeQuery();
+
                 if (rs.next()) {
                     loggedBank = new Bank(
                             rs.getInt("BankID"),
@@ -173,10 +174,16 @@ public class BankLauncher {
                             rs.getDouble("CreditLimit"),
                             rs.getDouble("processingFee")
                     );
+
+                    // ✅ Set the logged-in bank ID
+                    loggedInBankID = rs.getInt("BankID");
+                    System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
+                } else {
+                    System.out.println("Login failed! Invalid Bank ID or Passcode.");
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Database error: " + e.getMessage());
         }
     }
 
@@ -263,4 +270,6 @@ public class BankLauncher {
             System.out.println("Error fetching registered banks: " + e.getMessage());
         }
     }
+    public static int loggedInBankID = -1; // Default to -1 (not logged in)
 }
+

@@ -43,11 +43,11 @@ public class Main
                 BankLauncher.bankInit();
 
             }
-            // Create New Bank
+            // Admin
             else if (getOption() == 3)
             {
                 // TODO: Complete this portion...
-                BankLauncher.createNewBank();
+                Admin.adminMenu();
 
             }
             else if (getOption() == 4)

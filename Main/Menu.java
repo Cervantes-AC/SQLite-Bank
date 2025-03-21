@@ -8,7 +8,7 @@ public enum Menu {
     /**
      * Main.Menu options for main menu. This is the root menu for the program.
      */
-    MainMenu(new String[]{ "Accounts Login", "Bank Login", "Create New Bank", "Exit" }, 1),
+    MainMenu(new String[]{ "Accounts Login", "Bank Login", "Bank Admin", "Exit" }, 1),
     /**
      * Accounts.Account Login menu options.
      */
