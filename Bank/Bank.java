@@ -114,16 +114,15 @@ public class Bank {
         }
     }
 
-    @Override
-    public String toString() {
-        return "Bank{" +
-                "ID=" + BankID +
-                ", name='" + name + '\'' +
-                ", passcode='" + passcode + '\'' +
-                ", DepositLimit=" + DepositLimit +
-                ", WithdrawLimit=" + WithdrawLimit +
-                ", CreditLimit=" + CreditLimit +
-                ", processingFee=" + processingFee +
-                '}';
+
+
+    /**
+     * Checks if an account exists in this bank.
+     *
+     * @param accountNum The account number to search for.
+     * @return True if the account exists, false otherwise.
+     */
+    public boolean findAccount(String accountNum) {
+        return getAccount(accountNum) != null;
     }
 }

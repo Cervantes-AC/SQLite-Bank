@@ -158,37 +158,45 @@ public class BankLauncher {
 
     /**
      * Handles bank login.
+     * Authenticates a bank using its ID and passcode, then initializes the logged-in bank.
+     *
+     * @param bankID   The ID of the bank.
+     * @param passcode The bank's passcode.
      */
     public static void bankLogin(String bankID, String passcode) {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, bankID);
-                pstmt.setString(2, passcode);
-                ResultSet rs = pstmt.executeQuery();
+        String query = "SELECT * FROM Bank WHERE BankID = ? AND Passcode = ?";
 
-                if (rs.next()) {
-                    loggedBank = new Bank(
-                            rs.getInt("BankID"),
-                            rs.getString("Name"),
-                            rs.getString("Passcode"),
-                            rs.getDouble("DepositLimit"),
-                            rs.getDouble("WithdrawLimit"),
-                            rs.getDouble("CreditLimit"),
-                            rs.getDouble("processingFee")
-                    );
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-                    // Set the logged-in bank ID
-                    loggedInBankID = rs.getInt("BankID");
-                    System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
-                } else {
-                    System.out.println("Login failed! Invalid Bank ID or Passcode.");
-                }
+            // Set query parameters
+            pstmt.setString(1, bankID);
+            pstmt.setString(2, passcode);
+            ResultSet rs = pstmt.executeQuery();
+
+            // Check if bank exists
+            if (rs.next()) {
+                // Create a logged-in bank instance
+                loggedBank = new Bank(
+                        rs.getInt("BankID"),
+                        rs.getString("Name"),
+                        rs.getString("Passcode"),
+                        rs.getDouble("DepositLimit"),
+                        rs.getDouble("WithdrawLimit"),
+                        rs.getDouble("CreditLimit"),
+                        rs.getDouble("processingFee")
+                );
+
+                System.out.println("Successfully logged into Bank: " + loggedBank.getName());
+            } else {
+                System.out.println("Login failed! Invalid Bank ID or Passcode.");
             }
+
         } catch (SQLException e) {
             System.out.println("Database error: " + e.getMessage());
         }
     }
+
 
     /**
      * Ends the current bank session.
@@ -273,7 +281,7 @@ public class BankLauncher {
             System.out.println("Error fetching registered banks: " + e.getMessage());
         }
     }
-    // this is like a destroy log session method
-    public static int loggedInBankID = -1; // Default to -1 (not logged in)
+
+
 }
 

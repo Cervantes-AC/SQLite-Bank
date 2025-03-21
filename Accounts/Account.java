@@ -5,7 +5,7 @@ import java.sql.*;
 /**
  * Base Account Class - Handles common attributes and behaviors for Savings and Credit accounts.
  */
-public class Account {
+public abstract class Account {
     protected int bankID;
     protected String type; // Savings or Credit
     protected String accountID;
@@ -104,6 +104,15 @@ public class Account {
     }
 
     // Getters for account info
+
+    public int getBankID() {
+        return bankID;
+    }
+
+    public String getType() {
+        return type;
+    }
+
     public String getAccountID() {
         return accountID;
     }
@@ -120,15 +129,12 @@ public class Account {
         return email;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public int getBankID() {
-        return bankID;
+    public String getFullName() {
+        return firstName + " " + lastName;
     }
 
     public String getPin() {
         return pin;
     }
+
 }
