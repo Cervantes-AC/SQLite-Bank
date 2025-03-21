@@ -1,7 +1,6 @@
 package Bank;
 
 import Accounts.*;
-
 import java.sql.*;
 
 /**
@@ -10,22 +9,21 @@ import java.sql.*;
  * Now integrates with SQLite for persistent data storage.
  */
 public class Bank {
-    public int getBankID;
-    private int AccountID;
+    private int BankID;
     private String name, passcode;
-    private double DepositLimit, WithdrawLimit, CreditLimit;
+    private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 10000.0;
     private double processingFee;
 
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    public Bank(int AccountID, String name, String passcode) {
-        this.AccountID = AccountID;
+    public Bank(String name, String passcode) {
         this.name = name;
         this.passcode = passcode;
     }
 
-    public Bank(int AccountID, String name, String passcode, double DepositLimit, double WithdrawLimit, double CreditLimit, double processingFee) {
-        this(AccountID, name, passcode);
+    public Bank(int BankID, String name, String passcode, double DepositLimit, double WithdrawLimit, double CreditLimit, double processingFee) {
+        this(name, passcode);
+        this.BankID = BankID;
         this.DepositLimit = DepositLimit;
         this.WithdrawLimit = WithdrawLimit;
         this.CreditLimit = CreditLimit;
@@ -33,20 +31,12 @@ public class Bank {
     }
 
     /** Getters and Setters **/
-    public int getGetBankID() {
-        return getBankID;
+    public int getBankID() {
+        return BankID;
     }
 
-    public void setGetBankID(int getBankID) {
-        this.getBankID = getBankID;
-    }
-
-    public int getAccountID() {
-        return AccountID;
-    }
-
-    public void setAccountID(int accountID) {
-        this.AccountID = accountID;
+    public void setBankID(int bankID) {
+        this.BankID = bankID;
     }
 
     public String getName() {
@@ -98,12 +88,12 @@ public class Bank {
     }
 
     /**
-     * Saves the bank to the database.
+     * Saves the bank to the database and retrieves the generated BankID.
      */
     public void InsertBank() {
         String sql = "INSERT INTO Bank (name, passcode, DepositLimit, WithdrawLimit, CreditLimit, processingFee) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, this.name);
             pstmt.setString(2, this.passcode);
@@ -113,7 +103,12 @@ public class Bank {
             pstmt.setDouble(6, this.processingFee);
             pstmt.executeUpdate();
 
-            System.out.println("Bank saved to database.");
+            ResultSet generatedKeys = pstmt.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                this.BankID = generatedKeys.getInt(1);
+            }
+
+            System.out.println("Bank saved to database with ID: " + this.BankID);
         } catch (SQLException e) {
             System.out.println("Database error: " + e.getMessage());
         }
@@ -142,6 +137,8 @@ public class Bank {
                         rs.getDouble("CreditLimit"),
                         rs.getDouble("processingFee")
                 );
+            } else {
+                System.out.println("No bank found with ID: " + bankID);
             }
         } catch (SQLException e) {
             System.out.println("Database error: " + e.getMessage());
@@ -158,7 +155,7 @@ public class Bank {
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setInt(1, this.AccountID);
+            pstmt.setInt(1, this.BankID);
             pstmt.setString(2, accountType);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -169,57 +166,10 @@ public class Bank {
         }
     }
 
-    /**
-     * Retrieves an account by account number from the specified bank.
-     * @param accountNum Account number to find.
-     * @return Account object if found, null otherwise.
-     */
-    public Account getBankAccount(String accountNum) {
-        String sql = "SELECT * FROM Account WHERE BankID = ? AND AccountID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, this.AccountID);
-            pstmt.setString(2, accountNum);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return new Account(
-                        rs.getInt("BankID"),
-                        rs.getString("AccountType"),
-                        rs.getString("FirstName"),
-                        rs.getString("LastName"),
-                        rs.getString("Email"),
-                        rs.getString("PIN")
-                );
-            }
-        } catch (SQLException e) {
-            System.out.println("Error retrieving account: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Checks if an account number already exists in the bank.
-     */
-    private boolean accountExists(String accountNum) {
-        String sql = "SELECT AccountID FROM Account WHERE BankID = ? AND AccountID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, this.AccountID);
-            pstmt.setString(2, accountNum);
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next();
-        } catch (SQLException e) {
-            System.out.println("Error checking account existence: " + e.getMessage());
-            return false;
-        }
-    }
-
     @Override
     public String toString() {
         return "Bank{" +
-                "ID=" + AccountID +
+                "ID=" + BankID +
                 ", name='" + name + '\'' +
                 ", passcode='" + passcode + '\'' +
                 ", DepositLimit=" + DepositLimit +

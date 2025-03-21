@@ -51,7 +51,6 @@ public class BankLauncher {
                 break;
             default:
                 System.out.println("Invalid option. Try again.");
-                break;
         }
     }
 
@@ -74,7 +73,6 @@ public class BankLauncher {
                     break;
                 default:
                     System.out.println("Invalid option.");
-                    break;
             }
         }
     }
@@ -101,7 +99,7 @@ public class BankLauncher {
         String type = input.nextLine();
 
         try {
-            Account newAccount = new Account(loggedBank.getBankID, type, firstName, lastName, email, pin);
+            Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
             if (newAccount.insertAccount()) {
                 System.out.println("Account created successfully!");
             } else {
@@ -121,7 +119,15 @@ public class BankLauncher {
                 pstmt.setString(2, passcode);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
-                    loggedBank = new Bank(rs.getInt("ID"), rs.getString("Name"), rs.getString("Passcode"));
+                    loggedBank = new Bank(
+                            rs.getInt("BankID"),
+                            rs.getString("Name"),
+                            rs.getString("Passcode"),
+                            rs.getDouble("DepositLimit"),
+                            rs.getDouble("WithdrawLimit"),
+                            rs.getDouble("CreditLimit"),
+                            rs.getDouble("processingFee")
+                    );
                 }
             }
         } catch (SQLException e) {
@@ -142,17 +148,8 @@ public class BankLauncher {
         System.out.print("Enter bank passcode: ");
         String passcode = input.nextLine();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String insertBank = "INSERT INTO Bank(Name, Passcode) VALUES(?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(insertBank)) {
-                pstmt.setString(1, name);
-                pstmt.setString(2, passcode);
-                pstmt.executeUpdate();
-                System.out.println("Bank created successfully!");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        Bank newBank = new Bank(name, passcode);
+        newBank.InsertBank();
     }
 
     /** Retrieves a bank from the database based on criteria. */
@@ -163,7 +160,15 @@ public class BankLauncher {
                 pstmt.setString(1, name);
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) {
-                    return new Bank(rs.getInt("ID"), rs.getString("Name"), rs.getString("Passcode"));
+                    return new Bank(
+                            rs.getInt("BankID"),
+                            rs.getString("Name"),
+                            rs.getString("Passcode"),
+                            rs.getDouble("DepositLimit"),
+                            rs.getDouble("WithdrawLimit"),
+                            rs.getDouble("CreditLimit"),
+                            rs.getDouble("processingFee")
+                    );
                 }
             }
         } catch (SQLException e) {
