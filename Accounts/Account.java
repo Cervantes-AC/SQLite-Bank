@@ -1,20 +1,24 @@
 package Accounts;
 
-import Transactions.Transaction;
 import java.sql.*;
+import java.util.Scanner;
 
+/**
+ * Base Account Class - Handles Savings and Credit accounts
+ */
 public class Account {
-    private int bankID;
-    private String type; // Savings or Credit
-    private String accountID;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String pin;
+    protected int bankID;
+    protected String type; // Savings or Credit
+    protected String accountID;
+    protected String firstName;
+    protected String lastName;
+    protected String email;
+    protected String pin;
+    private static Scanner input = new Scanner(System.in);
 
-    private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
+    protected static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    // Constructor
+    // Constructor for loading an existing account
     public Account(int bankID, String type, String firstName, String lastName, String email, String pin) {
         this.bankID = bankID;
         this.type = validateAccountType(type);
@@ -33,28 +37,33 @@ public class Account {
         throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
     }
 
-    // Insert Account into SQLite database (handles Savings and Credit properly)
-    public boolean insertAccount() {
-        String table;
-        String sql;
-        double defaultValue = 0.0;
+    // Split creation into separate Savings and Credit methods with user input for initial value
+    public static Account createSavingsAccount(int bankID, String firstName, String lastName, String email, String pin) {
+        System.out.print("Enter initial deposit amount: ");
+        double initialBalance = Double.parseDouble(input.nextLine());
 
-        // Determine table, SQL statement, and default value
-        if (type.equalsIgnoreCase("Savings")) {
-            table = "SavingsAccount";
-            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Balance) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        } else if (type.equalsIgnoreCase("Credit")) {
-            table = "CreditAccount";
-            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Loan) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        } else {
-            System.out.println("Invalid account type.");
-            return false;
-        }
+        Account newAccount = new Account(bankID, "Savings", firstName, lastName, email, pin);
+        return newAccount.insertAccount("SavingsAccount", "Balance", initialBalance) ? newAccount : null;
+    }
+
+    public static Account createCreditAccount(int bankID, String firstName, String lastName, String email, String pin) {
+        System.out.print("Enter initial loan amount: ");
+        double initialLoan = Double.parseDouble(input.nextLine());
+
+        Account newAccount = new Account(bankID, "Credit", firstName, lastName, email, pin);
+        return newAccount.insertAccount("CreditAccount", "Loan", initialLoan) ? newAccount : null;
+    }
+
+    // Insert Account into SQLite database (handles Savings and Credit properly)
+    private boolean insertAccount(String table, String balanceColumn, double defaultValue) {
+        String sql = String.format(
+                "INSERT INTO %s (BankID, AccountID, FirstName, LastName, Email, PIN, %s) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                table, balanceColumn);
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            // Set the common fields
+            // Set account details
             pstmt.setInt(1, bankID);
             pstmt.setString(2, accountID);
             pstmt.setString(3, firstName);
@@ -62,7 +71,7 @@ public class Account {
             pstmt.setString(5, email);
             pstmt.setString(6, pin);
 
-            // Set Balance or Loan to 0.0 by default
+            // Set default Balance/Loan value
             pstmt.setDouble(7, defaultValue);
 
             int rowsAffected = pstmt.executeUpdate();
@@ -74,17 +83,14 @@ public class Account {
         } catch (SQLException e) {
             System.out.println("SQLite error: " + e.getMessage());
         }
-
         return false;
     }
-
 
     // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
         String prefix = type.equalsIgnoreCase("Savings") ? "SA" : "CA";
         int count = 1;
 
-        // Fetch the current count of accounts for this bank and type
         String table = type.equalsIgnoreCase("Savings") ? "SavingsAccount" : "CreditAccount";
         String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
 
@@ -94,67 +100,15 @@ public class Account {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                count = rs.getInt("count") + 1;  // Increment for the next account
+                count = rs.getInt("count") + 1; // Increment for the next account
             }
 
         } catch (SQLException e) {
             System.out.println("Failed to generate account ID: " + e.getMessage());
         }
 
-        // Format it as SA01-BankID or CA01-BankID
+        // Format: SA01-BankID or CA01-BankID
         return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
-
-    // Logs a new transaction and saves it to the database
-    public void addNewTransaction(String transactionType, double amount, String description) {
-        String sql = "INSERT INTO Transactions (AccountID, Type, Amount, Description) VALUES (?, ?, ?, ?)";
-
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, this.accountID);
-            pstmt.setString(2, transactionType);
-            pstmt.setDouble(3, amount);
-            pstmt.setString(4, description);
-
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Failed to add transaction: " + e.getMessage());
-        }
-    }
-
-    // Fetch transaction history for the account
-    public String getTransactionsInfo() {
-        StringBuilder info = new StringBuilder();
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Transactions WHERE AccountID = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, this.accountID);
-                ResultSet rs = pstmt.executeQuery();
-                while (rs.next()) {
-                    info.append("Type: ").append(rs.getString("Type"))
-                            .append(", Amount: ").append(rs.getDouble("Amount"))
-                            .append(", Description: ").append(rs.getString("Description"))
-                            .append(", Date: ").append(rs.getString("Date"))
-                            .append("\n");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Failed to fetch transactions: " + e.getMessage());
-        }
-        return info.toString();
-    }
-
-    @Override
-    public String toString() {
-        return "Account{" +
-                "BankID=" + bankID +
-                ", AccountID='" + accountID + '\'' +
-                ", FirstName='" + firstName + '\'' +
-                ", LastName='" + lastName + '\'' +
-                ", Email='" + email + '\'' +
-                ", Pin='" + pin + '\'' +
-                '}';
-    }
 }

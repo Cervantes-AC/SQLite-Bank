@@ -137,19 +137,21 @@ public class BankLauncher {
         System.out.print("Enter account type (Savings/Credit): ");
         String type = input.nextLine();
 
-        System.out.print("Enter account type (Savings/Credit): ");
-        String amount = input.nextLine();
+        Account newAccount = null;
+
         try {
-            Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
-            if (newAccount.insertAccount()) {
-                System.out.println("Account created successfully!");
+            if (type.equalsIgnoreCase("Savings")) {
+                newAccount = Account.createSavingsAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
+            } else if (type.equalsIgnoreCase("Credit")) {
+                newAccount = Account.createCreditAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
             } else {
-                System.out.println("Failed to create account.");
+                throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
             }
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
+
 
     /**
      * Handles bank login.
