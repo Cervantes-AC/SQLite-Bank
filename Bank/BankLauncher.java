@@ -135,21 +135,27 @@ public class BankLauncher {
         String pin = input.nextLine();
 
         System.out.print("Enter account type (Savings/Credit): ");
-        String type = input.nextLine();
+        String type = input.nextLine().toLowerCase(); // Convert to lowercase for case insensitivity
 
-        System.out.print("Enter account type (Savings/Credit): ");
-        String amount = input.nextLine();
-        try {
+        double amount = 0; // Default value
+
+        if (type.equals("savings") || type.equals("credit")) {
+            System.out.print(type.equals("savings") ? "Enter initial balance: " : "Enter loan amount: ");
+            amount = input.nextDouble();
+            input.nextLine(); // Consume newline character
+            // Create a general Account object
             Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
-            if (newAccount.insertAccount()) {
-                System.out.println("Account created successfully!");
+            if (newAccount.insertAccount(amount)) {
+                System.out.println(type.equals("savings") ? "Savings account created successfully!" : "Credit account created successfully!");
             } else {
-                System.out.println("Failed to create account.");
+                System.out.println("Failed to create " + type + " account.");
             }
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
+        } else {
+            System.out.println("Invalid account type. Please enter Savings or Credit.");
         }
     }
+
+
 
     /**
      * Handles bank login.

@@ -58,12 +58,11 @@ public class Account {
     }
 
     // Insert Account into SQLite database (handles Savings and Credit properly)
-    public boolean insertAccount() {
+    public boolean insertAccount(double initialAmount) {
         String table;
         String sql;
-        double defaultValue = 0.0;
 
-        // Determine table, SQL statement, and default value
+        // Determine table and SQL statement based on account type
         if (type.equalsIgnoreCase("Savings")) {
             table = "SavingsAccount";
             sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Balance) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -75,30 +74,31 @@ public class Account {
             return false;
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            conn.setAutoCommit(false);
 
-            // Set the common fields
-            pstmt.setInt(1, bankID);
-            pstmt.setString(2, accountID);
-            pstmt.setString(3, firstName);
-            pstmt.setString(4, lastName);
-            pstmt.setString(5, email);
-            pstmt.setString(6, pin);
-
-            // Set Balance or Loan to 0.0 by default
-            pstmt.setDouble(7, defaultValue);
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Account created successfully!");
-                System.out.println("Account ID: " + accountID);
-                return true;
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, bankID);
+                pstmt.setString(2, accountID);
+                pstmt.setString(3, firstName);
+                pstmt.setString(4, lastName);
+                pstmt.setString(5, email);
+                pstmt.setString(6, pin);
+                pstmt.setDouble(7, initialAmount);
+                int rowsAffected = pstmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    conn.commit();
+                    System.out.println("Account created successfully!");
+                    System.out.println("Account ID: " + accountID);
+                    return true;
+                } else {
+                    conn.rollback(); // Rollback if insert fails
+                    System.out.println("Failed to insert account.");
+                }
             }
         } catch (SQLException e) {
             System.out.println("SQLite error: " + e.getMessage());
         }
-
         return false;
     }
 
