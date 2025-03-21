@@ -69,14 +69,13 @@ public class Admin {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             if (conn != null) {
                 System.out.println("""
-                        Select an option:
-                        1 - View ID
-                        2 - View Name
-                        3 - View Passcode
-                        4 - View All Data
-                        """);
+                    Select an option:
+                    1 - View Bank ID
+                    2 - View Name
+                    3 - View All Data
+                    """);
 
-                System.out.print("Enter a number (1-8): ");
+                System.out.print("Enter a number (1-3): ");
                 int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
 
@@ -91,16 +90,11 @@ public class Admin {
                         columnName = "name";
                         break;
                     case 3:
-                        columnName = "passcode";
+                        columnName = "BankID, name";
                         break;
-                    case 4: {
-                        columnName = "*"; // Select all columns
-                        break;
-                    }
-                    default: {
-                        System.out.println("Invalid selection! Please enter a number between 1 and 8.");
+                    default:
+                        System.out.println("Invalid selection! Please enter a number between 1 and 3.");
                         return;
-                    }
                 }
 
                 String selectSQL = "SELECT " + columnName + " FROM Bank";
@@ -112,31 +106,27 @@ public class Admin {
                     System.out.println("------------------------------");
 
                     while (rs.next()) {
-                        if (choice == 4) {
-                            // Print all columns when option 8 is selected
-                            Bank bank = new Bank(rs.getString("name"), rs.getString("passcode"));
-                            bank.setBankID(rs.getInt("BankID"));
+                        if (choice == 3) {
+                            // Print all columns except passcode
                             System.out.printf("""
-                                            Bank ID: %d
-                                            Name: %s
-                                            Passcode: %s
-                                            ------------------------------
-                                            """,
-                                    bank.getBankID(),
-                                    bank.getName(),
-                                    bank.getPasscode());
+                                        Bank ID: %d
+                                        Name: %s
+                                        ------------------------------
+                                        """,
+                                    rs.getInt("BankID"),
+                                    rs.getString("name"));
                         } else {
                             // Print only the selected column
                             System.out.println(columnName + ": " + rs.getString(columnName));
                         }
                     }
-
                 }
             }
         } catch (SQLException e) {
             System.out.println("SQLite connection error: " + e.getMessage());
         }
     }
+
 
     public static boolean deleteBank() {
         Scanner scanner = new Scanner(System.in);
@@ -171,46 +161,61 @@ public class Admin {
     }
 
     public static void readAccount() {
-        if (BankLauncher.loggedInBankID == -1) { // Auto-login if not logged in
-            System.out.print("Enter Bank ID to log in: ");
-            String bankID = scanner.nextLine();
+        System.out.print("Enter Bank ID: ");
+        int bankID;
+        try {
+            bankID = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Bank ID. Please enter a numeric value.");
+            return;
+        }
 
-            System.out.print("Enter Bank Passcode: ");
-            String passcode = scanner.nextLine();
+        System.out.println("""
+            Select an option:
+            1 - View Savings Accounts (SA)
+            2 - View Credit Accounts (CA)
+            3 - View All Accounts
+            """);
 
-            BankLauncher.bankLogin(bankID, passcode);
-            if (BankLauncher.loggedInBankID == -1) {
-                System.out.println("Login failed. Returning to the menu.");
-                return;
-            }
+        System.out.print("Enter your choice (1-3): ");
+        int choice;
+        try {
+            choice = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid choice. Please enter a number between 1 and 3.");
+            return;
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             if (conn != null) {
-                // Query SavingsAccount
-                String savingsSQL = "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?"; // to get the data from the savings accounts database
-                System.out.println("\n--- Savings Accounts ---");
-                displayAccounts(conn, savingsSQL, "Balance");
-
-                // Query CreditAccount (Loan instead of Balance)
-                String creditSQL = "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?"; // to get the data from the credit accounts database
-                System.out.println("\n--- Credit Accounts ---");
-                displayAccounts(conn, creditSQL, "Loan");
+                switch (choice) {
+                    case 1:
+                        System.out.println("\n--- Savings Accounts ---");
+                        displayAccounts(conn, "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?", "Balance", bankID);
+                        break;
+                    case 2:
+                        System.out.println("\n--- Credit Accounts ---");
+                        displayAccounts(conn, "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?", "Loan", bankID);
+                        break;
+                    case 3:
+                        System.out.println("\n--- Savings Accounts ---");
+                        displayAccounts(conn, "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?", "Balance", bankID);
+                        System.out.println("\n--- Credit Accounts ---");
+                        displayAccounts(conn, "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?", "Loan", bankID);
+                        break;
+                    default:
+                        System.out.println("Invalid selection! Please enter a number between 1 and 3.");
+                }
             }
         } catch (SQLException e) {
             System.out.println("SQLite connection error: " + e.getMessage());
-        } finally {
-            // Auto-logout after reading accounts
-            BankLauncher.loggedInBankID = -1;
-            System.out.println("Logged out.");
         }
     }
 
-    // Helper method to display account data
-    private static void displayAccounts(Connection conn, String query, String amountColumn) throws SQLException { // to display the account of the logged bank account
+    // Helper method to display account data based on BankID
+    private static void displayAccounts(Connection conn, String query, String amountColumn, int bankID) {
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, BankLauncher.loggedInBankID);
-            System.out.println("Using BankID: " + BankLauncher.loggedInBankID);  // Debugging line
+            pstmt.setInt(1, bankID);
             try (ResultSet rs = pstmt.executeQuery()) {
                 boolean hasData = false;
                 while (rs.next()) {
@@ -226,10 +231,13 @@ public class Admin {
                     );
                 }
                 if (!hasData) {
-                    System.out.println("No accounts found for this bank.");  // Debugging message
+                    System.out.println("No accounts found for this Bank ID.");
                 }
             }
+        } catch (SQLException e) {
+            System.out.println("Error retrieving account data: " + e.getMessage());
         }
     }
+
 
 }
