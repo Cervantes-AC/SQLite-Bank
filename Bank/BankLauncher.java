@@ -31,7 +31,7 @@ public class BankLauncher {
 
         switch (Main.getOption()) {
             case 1:
-                ShowRegisteredBank();
+                ShowBankMenu();
                 System.out.print("Enter Bank ID: ");
                 String name = input.nextLine();
                 System.out.print("Enter passcode: ");
@@ -134,15 +134,14 @@ public class BankLauncher {
         String pin = input.nextLine();
 
         System.out.print("Enter account type (Savings/Credit): ");
-        String type = input.nextLine().toLowerCase(); // Convert to lowercase for case insensitivity
+        String type = input.nextLine().toLowerCase();
 
-        double amount = 0; // Default value
+        double amount = 0;
 
         if (type.equals("savings") || type.equals("credit")) {
             System.out.print(type.equals("savings") ? "Enter initial balance: " : "Enter loan amount: ");
             amount = input.nextDouble();
-            input.nextLine(); // Consume newline character
-            // Create a general Account object
+            input.nextLine();
             Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
             if (newAccount.insertAccount(amount)) {
                 System.out.println(type.equals("savings") ? "Savings account created successfully!" : "Credit account created successfully!");
@@ -178,7 +177,7 @@ public class BankLauncher {
                             rs.getDouble("processingFee")
                     );
 
-                    // ✅ Set the logged-in bank ID
+                    // Set the logged-in bank ID
                     loggedInBankID = rs.getInt("BankID");
                     System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
                 } else {
@@ -211,50 +210,7 @@ public class BankLauncher {
         newBank.InsertBank();
     }
 
-    /**
-     * Retrieves a bank from the database based on criteria.
-     */
-    public static Bank getBank(String name) {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Bank WHERE Name = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, name);
-                ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) {
-                    return new Bank(
-                            rs.getInt("BankID"),
-                            rs.getString("Name"),
-                            rs.getString("Passcode"),
-                            rs.getDouble("DepositLimit"),
-                            rs.getDouble("WithdrawLimit"),
-                            rs.getDouble("CreditLimit"),
-                            rs.getDouble("processingFee")
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * Returns the number of registered banks.
-     */
-    public static int bankSize() {
-        int count = 0;
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT COUNT(*) AS count FROM Bank";
-            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-                count = rs.getInt("count");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    public static void ShowRegisteredBank() {
+    public static void ShowBankMenu() {
         String query;
         query = "SELECT BankID, Name FROM Bank";
 

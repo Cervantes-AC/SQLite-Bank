@@ -4,17 +4,8 @@ import Accounts.SavingsAccount;
 import Transactions.IllegalAccountType;
 
 import java.util.Scanner;
-/**
- * SavingsAccountLauncher Class
- * Extends AccountLauncher to handle savings account-specific operations.
- *
- * Methods:
- * - savingsAccountInit(): Initializes savings account interactions, displaying the main menu.
- * - depositProcess(): Handles the deposit transaction process.
- * - withdrawProcess(): Manages the withdrawal transaction process.
- * - transferProcess(): Handles fund transfers between accounts.
- * - getLoggedAccount(): Returns the currently logged-in SavingsAccount.
- */
+import Main.*;
+
 
 public class SavingsAccountLauncher extends AccountLauncher {
     private static SavingsAccount loggedAccount;
@@ -38,22 +29,11 @@ public class SavingsAccountLauncher extends AccountLauncher {
 
     private static void savingsMenu() throws IllegalAccountType {
         while (true) {
-            System.out.println("\n1. View Balance");
-            System.out.println("2. Deposit Money");
-            System.out.println("3. Withdraw Money");
-            System.out.println("4. Transfer Funds");
-            System.out.println("5. Logout");
-            System.out.print("Choose an option: ");
+            Main.showMenuHeader("Savings Account");
+            Main.showMenu(51,2);
+            Main.setOption();
 
-            int choice;
-            try {
-                choice = Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number.");
-                continue;
-            }
-
-            switch (choice) {
+            switch (Main.getOption()) {
                 case 1:
                     System.out.println("\n" + loggedAccount.getAccountBalanceStatement());
                     break;

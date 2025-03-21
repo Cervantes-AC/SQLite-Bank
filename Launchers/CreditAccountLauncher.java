@@ -4,17 +4,6 @@ import Accounts.CreditAccount;
 import Transactions.IllegalAccountType;
 
 import java.util.Scanner;
-/**
- * CreditAccountLauncher Class
- * Extends AccountLauncher to handle credit account-specific operations.
- *
- * Methods:
- * - creditAccountInit(): Initializes credit account interactions, displaying the main menu.
- * - creditPaymentProcess(): Processes a credit payment transaction.
- * - creditRecompenseProcess(): Handles credit recompense transactions.
- * - getLoggedAccount(): Returns the currently logged-in CreditAccount.
- */
-
 
 
 /**
@@ -87,7 +76,7 @@ public class CreditAccountLauncher extends AccountLauncher {
             return;
         }
 
-        // ✅ FIX: Call pay() instead of recompense()
+        // FIX: Call pay() instead of recompense()
         try {
             boolean success = loggedAccount.pay(loggedAccount, amount);
             if (success) {

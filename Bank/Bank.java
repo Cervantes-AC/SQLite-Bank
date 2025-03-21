@@ -1,6 +1,5 @@
 package Bank;
 
-import Accounts.*;
 import java.sql.*;
 
 /**
@@ -10,7 +9,8 @@ import java.sql.*;
  */
 public class Bank {
     private int BankID;
-    private String name, passcode;
+    private final String name;
+    private final String passcode;
     private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 10000.0;
     private double processingFee = 10.0;
 
@@ -35,56 +35,12 @@ public class Bank {
         return BankID;
     }
 
-    public void setBankID(int bankID) {
-        this.BankID = bankID;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getPasscode() {
-        return passcode;
-    }
-
-    public void setPasscode(String passcode) {
-        this.passcode = passcode;
-    }
-
     public double getDepositLimit() {
         return DepositLimit;
     }
 
-    public void setDepositLimit(double depositLimit) {
-        DepositLimit = depositLimit;
-    }
-
     public double getWithdrawLimit() {
         return WithdrawLimit;
-    }
-
-    public void setWithdrawLimit(double withdrawLimit) {
-        WithdrawLimit = withdrawLimit;
-    }
-
-    public double getCreditLimit() {
-        return CreditLimit;
-    }
-
-    public void setCreditLimit(double creditLimit) {
-        CreditLimit = creditLimit;
-    }
-
-    public double getProcessingFee() {
-        return processingFee;
-    }
-
-    public void setProcessingFee(double processingFee) {
-        this.processingFee = processingFee;
     }
 
     /**
