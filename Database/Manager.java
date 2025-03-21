@@ -14,7 +14,7 @@ public class Manager {
                 String sql = """
                     CREATE TABLE IF NOT EXISTS Bank (
                         BankID INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL,
+                        name TEXT UNIQUE NOT NULL,
                         passcode TEXT NOT NULL,
                         DepositLimit REAL DEFAULT 50000.0,
                         WithdrawLimit REAL DEFAULT 50000.0,
