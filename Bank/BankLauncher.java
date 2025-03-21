@@ -39,14 +39,13 @@ public class BankLauncher {
                 bankLogin(name, passcode);
 
                 if (loggedBank != null) {
-                    System.out.println("Successfully logged in!");
                     bankMenu();
                 } else {
                     System.out.println("Invalid credentials.");
                 }
                 break;
             case 2:
-                System.exit(0);
+                System.out.print("Returning to Main Menu\n");
                 break;
             default:
                 System.out.println("Invalid option. Try again.");

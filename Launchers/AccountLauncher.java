@@ -36,7 +36,8 @@ public class AccountLauncher {
                 }
                 break;
             } else {
-                System.out.println("Login failed. Invalid credentials. Try again.");
+                System.out.println("Login failed. Invalid credentials");
+                break;
             }
         }
     }

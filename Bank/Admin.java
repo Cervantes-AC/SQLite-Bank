@@ -73,9 +73,10 @@ public class Admin {
                     1 - View Bank ID
                     2 - View Name
                     3 - View All Data
+                    4 - Go back
                     """);
 
-                System.out.print("Enter a number (1-3): ");
+                System.out.print("Enter a number (1-4): ");
                 int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
 
@@ -92,8 +93,11 @@ public class Admin {
                     case 3:
                         columnName = "BankID, name";
                         break;
+                    case 4:
+                        System.out.print("Returning to Admin Menu...");
+                        return;
                     default:
-                        System.out.println("Invalid selection! Please enter a number between 1 and 3.");
+                        System.out.println("Invalid selection! Please enter a number between 1 and 4.");
                         return;
                 }
 
@@ -175,9 +179,10 @@ public class Admin {
             1 - View Savings Accounts (SA)
             2 - View Credit Accounts (CA)
             3 - View All Accounts
+            4 - Go back
             """);
 
-        System.out.print("Enter your choice (1-3): ");
+        System.out.print("Enter your choice (1-4): ");
         int choice;
         try {
             choice = Integer.parseInt(scanner.nextLine().trim());
@@ -203,6 +208,9 @@ public class Admin {
                         System.out.println("\n--- Credit Accounts ---");
                         displayAccounts(conn, "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?", "Loan", bankID);
                         break;
+                    case 4:
+                        System.out.println("Returning to Admin Menu...");
+                        return;
                     default:
                         System.out.println("Invalid selection! Please enter a number between 1 and 3.");
                 }

@@ -36,7 +36,14 @@ public class Main
                 showMenu(2, 1);
                 setOption();
                 // TODO: Complete this portion
-                AccountLauncher.AccountInit();
+                if (getOption() == 1){
+                AccountLauncher.AccountInit();}
+                else if (getOption() == 2) {
+                    System.out.println("Returning to Main Menu");
+                    showMenuHeader("Main Menu");
+                    showMenu(1);
+                    setOption();;
+                }else{System.out.println("Invalid Option. Returning to Main Menu");}
             }
             // Bank Option
             else if (getOption() == 2)
