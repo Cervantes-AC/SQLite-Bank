@@ -1,10 +1,9 @@
 package Accounts;
 
 import java.sql.*;
-import java.util.Scanner;
 
 /**
- * Base Account Class - Handles Savings and Credit accounts
+ * Base Account Class - Handles common attributes and behaviors for Savings and Credit accounts.
  */
 public class Account {
     protected int bankID;
@@ -14,11 +13,10 @@ public class Account {
     protected String lastName;
     protected String email;
     protected String pin;
-    private static Scanner input = new Scanner(System.in);
 
     protected static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    // Constructor for loading an existing account
+    // Constructor for creating a new account
     public Account(int bankID, String type, String firstName, String lastName, String email, String pin) {
         this.bankID = bankID;
         this.type = validateAccountType(type);
@@ -37,25 +35,15 @@ public class Account {
         throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
     }
 
-    // Split creation into separate Savings and Credit methods with user input for initial value
-    public static Account createSavingsAccount(int bankID, String firstName, String lastName, String email, String pin) {
-        System.out.print("Enter initial deposit amount: ");
-        double initialBalance = Double.parseDouble(input.nextLine());
-
-        Account newAccount = new Account(bankID, "Savings", firstName, lastName, email, pin);
-        return newAccount.insertAccount("SavingsAccount", "Balance", initialBalance) ? newAccount : null;
-    }
-
-    public static Account createCreditAccount(int bankID, String firstName, String lastName, String email, String pin) {
-        System.out.print("Enter initial loan amount: ");
-        double initialLoan = Double.parseDouble(input.nextLine());
-
-        Account newAccount = new Account(bankID, "Credit", firstName, lastName, email, pin);
-        return newAccount.insertAccount("CreditAccount", "Loan", initialLoan) ? newAccount : null;
-    }
-
-    // Insert Account into SQLite database (handles Savings and Credit properly)
-    private boolean insertAccount(String table, String balanceColumn, double defaultValue) {
+    /**
+     * Inserts the account into the appropriate table (SavingsAccount or CreditAccount).
+     *
+     * @param table         The target table ("SavingsAccount" or "CreditAccount").
+     * @param balanceColumn  The column to store balance or loan ("Balance" or "Loan").
+     * @param defaultValue   The initial value (e.g., starting balance or loan amount).
+     * @return true if insertion is successful, false otherwise.
+     */
+    public boolean insertAccount(String table, String balanceColumn, double defaultValue) {
         String sql = String.format(
                 "INSERT INTO %s (BankID, AccountID, FirstName, LastName, Email, PIN, %s) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 table, balanceColumn);
@@ -86,7 +74,11 @@ public class Account {
         return false;
     }
 
-    // Generate Account ID (SA01-BankID or CA02-BankID)
+    /**
+     * Generates a unique account ID for the account (e.g., SA01-BankID or CA02-BankID).
+     *
+     * @return The generated account ID string.
+     */
     private String generateAccountID() {
         String prefix = type.equalsIgnoreCase("Savings") ? "SA" : "CA";
         int count = 1;
@@ -111,4 +103,32 @@ public class Account {
         return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
+    // Getters for account info
+    public String getAccountID() {
+        return accountID;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public int getBankID() {
+        return bankID;
+    }
+
+    public String getPin() {
+        return pin;
+    }
 }

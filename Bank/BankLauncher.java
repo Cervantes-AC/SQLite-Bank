@@ -141,9 +141,9 @@ public class BankLauncher {
 
         try {
             if (type.equalsIgnoreCase("Savings")) {
-                newAccount = Account.createSavingsAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
+                newAccount = SavingsAccount.createSavingsAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
             } else if (type.equalsIgnoreCase("Credit")) {
-                newAccount = Account.createCreditAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
+                newAccount = CreditAccount.createCreditAccount(loggedBank.getBankID(), firstName, lastName, email, pin);
             } else {
                 throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
             }
