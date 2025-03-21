@@ -114,27 +114,6 @@ public class Bank {
         }
     }
 
-
-    /**
-     * Displays accounts based on the specified type.
-     * @param accountType Type of account to display.
-     */
-    public void showAccounts(String accountType) {
-        String query = "SELECT * FROM SavingsAccount WHERE BankID = ? ";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-            pstmt.setInt(1, this.BankID);
-            pstmt.setString(2, accountType);
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                System.out.println("Account Number: " + rs.getString("AccountID") + ", Balance: " + rs.getDouble("Balance"));
-            }
-        } catch (SQLException e) {
-            System.out.println("Error displaying accounts: " + e.getMessage());
-        }
-    }
-
     @Override
     public String toString() {
         return "Bank{" +
