@@ -137,6 +137,8 @@ public class BankLauncher {
         System.out.print("Enter account type (Savings/Credit): ");
         String type = input.nextLine();
 
+        System.out.print("Enter account type (Savings/Credit): ");
+        String amount = input.nextLine();
         try {
             Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
             if (newAccount.insertAccount()) {
