@@ -188,12 +188,12 @@ public class Admin {
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             if (conn != null) {
                 // Query SavingsAccount
-                String savingsSQL = "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?";
+                String savingsSQL = "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?"; // to get the data from the savings accounts database
                 System.out.println("\n--- Savings Accounts ---");
                 displayAccounts(conn, savingsSQL, "Balance");
 
                 // Query CreditAccount (Loan instead of Balance)
-                String creditSQL = "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?";
+                String creditSQL = "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?"; // to get the data from the credit accounts database
                 System.out.println("\n--- Credit Accounts ---");
                 displayAccounts(conn, creditSQL, "Loan");
             }
@@ -207,7 +207,7 @@ public class Admin {
     }
 
     // Helper method to display account data
-    private static void displayAccounts(Connection conn, String query, String amountColumn) throws SQLException {
+    private static void displayAccounts(Connection conn, String query, String amountColumn) throws SQLException { // to display the account of the logged bank account
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, BankLauncher.loggedInBankID);
             System.out.println("Using BankID: " + BankLauncher.loggedInBankID);  // Debugging line
@@ -218,7 +218,7 @@ public class Admin {
                     System.out.printf("""
                     Account ID: %s
                     %s: %s
-                    ------------------------------
+                    
                     """,
                             rs.getString("AccountID"),
                             amountColumn,

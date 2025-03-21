@@ -178,7 +178,7 @@ public class BankLauncher {
                             rs.getDouble("processingFee")
                     );
 
-                    // ✅ Set the logged-in bank ID
+                    // Set the logged-in bank ID
                     loggedInBankID = rs.getInt("BankID");
                     System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
                 } else {
@@ -273,6 +273,7 @@ public class BankLauncher {
             System.out.println("Error fetching registered banks: " + e.getMessage());
         }
     }
+    // this is like a destroy log session method
     public static int loggedInBankID = -1; // Default to -1 (not logged in)
 }
 
