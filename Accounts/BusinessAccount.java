@@ -15,14 +15,14 @@ public class BusinessAccount extends Account implements Payment, Recompense {
 
     // Constructor for a new Credit Account
     public BusinessAccount(int bankID, String firstName, String lastName, String email, String pin, double loan) {
-        super(bankID, "Credit", firstName, lastName, email, pin);
+        super(bankID, "Business", firstName, lastName, email, pin);
         this.loan = Math.max(0, loan); // Ensure loan is non-negative
         this.creditLimit = getCreditLimitFromDatabase(bankID); // Fetch credit limit
     }
 
     // Constructor for retrieving an existing Credit Account from the database
     public BusinessAccount(String accountID) {
-        super(getBankIDFromDatabase(accountID), "Credit", "", "", "", "");
+        super(getBankIDFromDatabase(accountID), "Business", "", "", "", "");
         this.setAccountID(accountID);
         loadBusinessAccountDetails(accountID);
 

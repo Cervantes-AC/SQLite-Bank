@@ -46,18 +46,29 @@ public class AccountDataHandler {
                     break;
 
                 case 3:
-                    // Show both Savings and Credit Accounts
-                    displayAccounts(conn, "SELECT AccountID, Balance FROM SavingsAccount WHERE BankID = ?", "Balance", bankID);
-                    displayAccounts(conn, "SELECT AccountID, Loan FROM CreditAccount WHERE BankID = ?", "Loan", bankID);
+                    // Show Business Accounts
+                    displayAccounts(conn, "SELECT * FROM BusinessAccount WHERE BankID = ?", "Loan", bankID);
                     break;
 
                 case 4:
+                    // Show Educational Accounts
+                    displayAccounts(conn, "SELECT * FROM EducationalAccount WHERE BankID = ?", "Balance", bankID);
+                    break;
+
+                case 5:
+                    // Show All Accounts
+                    displayAccounts(conn, "SELECT * FROM SavingsAccount WHERE BankID = ?", "Balance", bankID);
+                    displayAccounts(conn, "SELECT * FROM CreditAccount WHERE BankID = ?", "Loan", bankID);
+                    displayAccounts(conn, "SELECT * FROM BusinessAccount WHERE BankID = ?", "Loan", bankID);
+                    displayAccounts(conn, "SELECT * FROM EducationalAccount WHERE BankID = ?", "Balance", bankID);
+
+                case 6:
                     // Return to the admin menu
                     System.out.println("Returning to Admin Menu...");
                     break;
 
                 default:
-                    System.out.println("Invalid selection! Please enter a number between 1 and 3.");
+                    System.out.println("Invalid selection! Please enter a number between 1 and 6.");
                     break;
             }
         } catch (SQLException e) {

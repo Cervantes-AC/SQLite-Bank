@@ -23,8 +23,8 @@ public class BankDataHandler {
 
             // Display menu options
             System.out.println("""
-                1. View Bank Data
-                2. View Account Data
+                1. View Available Bank
+                2. View Accounts in Bank
                 3. Go Back
                 """);
 
@@ -82,7 +82,7 @@ public class BankDataHandler {
                         for (int i = 1; i <= columns; i++) {  // Correct loop to include last column
                             System.out.printf("%s: %s%n", metaData.getColumnName(i), rs.getString(i));
                         }
-                        System.out.println("------------------------------");
+                        System.out.println("- - - - - - - - - - - - -");
                     }
 
                     if (!hasData) System.out.println("No data found.");
