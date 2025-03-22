@@ -111,29 +111,38 @@ public class Account {
 
     // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
-        // Prefix and table mappings for each account type
-        String prefix = "";
-        String table = "";
+        String prefix;
+        String table;
 
         // Determine prefix and table based on account type
-        if (type.equalsIgnoreCase("Savings")) {
-            prefix = "SA";
-            table = "SavingsAccount";
-        } else if (type.equalsIgnoreCase("Credit")) {
-            prefix = "CA";
-            table = "CreditAccount";
-        } else if (type.equalsIgnoreCase("Business")) {
-            prefix = "BA";
-            table = "BusinessAccount";
-        } else if (type.equalsIgnoreCase("Educational")) {
-            prefix = "EA";
-            table = "EducationalAccount";
-        } else {
-            throw new IllegalArgumentException("Invalid account type: " + type);
+        switch (type.toLowerCase()) {
+            case "savings":
+                prefix = "SA";
+                table = "SavingsAccount";
+                break;
+            case "credit":
+                prefix = "CA";
+                table = "CreditAccount";
+                break;
+            case "business":
+                prefix = "BA";
+                table = "BusinessAccount";
+                break;
+            case "educational":
+                prefix = "EA";
+                table = "EducationalAccount";
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid account type: " + type);
+        }
+
+        // Validate that table is set correctly
+        if (table == null || table.isEmpty()) {
+            throw new IllegalStateException("Table name is not properly assigned for account type: " + type);
         }
 
         int count = 1;
-        String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
+        String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?"; // Corrected Query
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -141,14 +150,13 @@ public class Account {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                count = rs.getInt("count") + 1;  // Increment for the next account
+                count = rs.getInt("count") + 1; // Ensure count starts from 1
             }
-
         } catch (SQLException e) {
             System.out.println("Failed to generate account ID: " + e.getMessage());
         }
 
-        // Format it as SA01-BankID or CA01-BankID
+        // Generate AccountID in format SA01-4 (example for bankID=4)
         return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
@@ -197,6 +205,31 @@ public class Account {
 
         return info.toString();
     }
+    // Insert Account into SQLite database (handles Savings and Credit properly)
+    private boolean isAccountIDUnique(String accountID) {
+        String sql = "SELECT COUNT(*) AS count FROM " + getAccountTable() + " WHERE AccountID = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, accountID);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt("count") == 0; // If count == 0, ID is unique
+        } catch (SQLException e) {
+            System.out.println("Error checking account ID uniqueness: " + e.getMessage());
+        }
+        return false;
+    }
+    // Helper method to get correct table name
+    private String getAccountTable() {
+        switch (type.toLowerCase()) {
+            case "savings": return "SavingsAccount";
+            case "credit": return "CreditAccount";
+            case "business": return "BusinessAccount";
+            case "educational": return "EducationalAccount";
+            default: throw new IllegalArgumentException("Invalid account type: " + type);
+        }
+    }
+
+
 
     @Override
     public String toString() {
