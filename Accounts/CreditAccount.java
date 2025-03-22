@@ -10,7 +10,7 @@ import java.sql.*;
  */
 public class CreditAccount extends Account implements Payment, Recompense {
     private double loan;
-    private double creditLimit;
+    private final double creditLimit;
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
     // Constructor for a new Credit Account
@@ -40,7 +40,7 @@ public class CreditAccount extends Account implements Payment, Recompense {
     }
 
     public String getLoanStatement() {
-        return "Loan balance: $" + loan;
+        return "Loan balance: ₱" + loan;
     }
 
     private boolean canCredit(double amount) {
@@ -82,28 +82,26 @@ public class CreditAccount extends Account implements Payment, Recompense {
         }
 
         if (!canCredit(amount)) {
-            System.out.println("Recompense failed: Exceeds credit limit of $" + creditLimit);
+            System.out.println("Recompense failed: Exceeds credit limit of ₱" + creditLimit);
             return false;
         }
 
-        System.out.println("Taking an additional loan of: $" + amount);
+        System.out.println("Taking an additional loan of: ₱" + amount);
         adjustLoanAmount(amount);
         addNewTransaction("Recompense", amount, "Loan recompense");
         return true;
     }
 
-    private boolean updateLoanInDatabase() {
+    private void updateLoanInDatabase() {
         String sql = "UPDATE CreditAccount SET Loan = ? WHERE AccountID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setDouble(1, loan);
             pstmt.setString(2, getAccountID());
-            int rowsUpdated = pstmt.executeUpdate();
-            return rowsUpdated > 0;
+            pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error updating loan balance: " + e.getMessage());
-            return false;
         }
     }
 

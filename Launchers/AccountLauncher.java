@@ -11,11 +11,9 @@ public class AccountLauncher {
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
     public static void AccountInit() throws IllegalAccountType {
-        System.out.println("Welcome to the Banking System!");
-
         while (true) {
             System.out.print("Enter Account ID: ");
-            String accountID = scanner.nextLine().trim();
+            String accountID = scanner.nextLine().trim().toUpperCase();
 
             System.out.print("Enter Account Passcode: ");
             String passcode = scanner.nextLine().trim();
@@ -24,7 +22,7 @@ public class AccountLauncher {
 
             if (account != null) {
                 setLogSession(account);
-                System.out.println("\nLogin successful!");
+                System.out.println("Login successful!");
 
                 if (account instanceof CreditAccount) {
                     CreditAccountLauncher.creditAccountInit();
@@ -33,18 +31,19 @@ public class AccountLauncher {
                 } else if (account instanceof BusinessAccount) {
                     BusinessAccountLauncher.businessAccountInit();
                 } else if (account instanceof EducationalAccount) {
-                        EducationalAccountLauncher.educationalAccountInit();
+                    EducationalAccountLauncher.educationalAccountInit();
                 } else {
                     System.out.println("Unknown account type. Logging out...");
                     destroyLogSession();
                 }
-                break;
+                break; // Exit loop on successful login
             } else {
-                System.out.println("Login failed. Invalid credentials");
+                System.out.println("Login failed. Invalid credentials. Please try again.");
                 break;
             }
         }
     }
+
 
     private static Account authenticateAccount(String accountID, String passcode) {
         String sqlSavings = "SELECT * FROM SavingsAccount WHERE AccountID = ? AND PIN = ?";
@@ -85,7 +84,7 @@ public class AccountLauncher {
                 }
             }
 
-            // Check if it's a Educational Account
+            // Check if it's an Educational Account
             pstmtEducational.setString(1, accountID);
             pstmtEducational.setString(2, passcode);
             try (ResultSet rs = pstmtEducational.executeQuery()) {

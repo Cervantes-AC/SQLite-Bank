@@ -42,7 +42,7 @@ public class Main
                     System.out.println("Returning to Main Menu");
                     showMenuHeader("Main Menu");
                     showMenu(1);
-                    setOption();;
+                    setOption();
                 }else{System.out.println("Invalid Option. Returning to Main Menu");}
             }
             // Bank Option

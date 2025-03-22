@@ -10,17 +10,10 @@ import java.sql.*;
  */
 public class BusinessAccount extends Account implements Payment, Recompense {
     private double loan;
-    private double creditLimit;
+    private final double creditLimit;
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
 
-    // Constructor for a new Credit Account
-    public BusinessAccount(int bankID, String firstName, String lastName, String email, String pin, double loan) {
-        super(bankID, "Business", firstName, lastName, email, pin);
-        this.loan = Math.max(0, loan); // Ensure loan is non-negative
-        this.creditLimit = getCreditLimitFromDatabase(bankID); // Fetch credit limit
-    }
-
-    // Constructor for retrieving an existing Credit Account from the database
+    // Constructor for retrieving an existing Business Account from the database
     public BusinessAccount(String accountID) {
         super(getBankIDFromDatabase(accountID), "Business", "", "", "", "");
         this.setAccountID(accountID);
@@ -40,7 +33,7 @@ public class BusinessAccount extends Account implements Payment, Recompense {
     }
 
     public String getLoanStatement() {
-        return "Loan balance: $" + loan;
+        return "Loan balance: ₱" + loan;
     }
 
     private boolean canCredit(double amount) {
@@ -82,28 +75,26 @@ public class BusinessAccount extends Account implements Payment, Recompense {
         }
 
         if (!canCredit(amount)) {
-            System.out.println("Recompense failed: Exceeds credit limit of $" + creditLimit);
+            System.out.println("Recompense failed: Exceeds credit limit of ₱" + creditLimit);
             return false;
         }
 
-        System.out.println("Taking an additional loan of: $" + amount);
+        System.out.println("Taking an additional loan of: ₱" + amount);
         adjustLoanAmount(amount);
         addNewTransaction("Recompense", amount, "Loan recompense");
         return true;
     }
 
-    private boolean updateLoanInDatabase() {
+    private void updateLoanInDatabase() {
         String sql = "UPDATE BusinessAccount SET Loan = ? WHERE AccountID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setDouble(1, loan);
             pstmt.setString(2, getAccountID());
-            int rowsUpdated = pstmt.executeUpdate();
-            return rowsUpdated > 0;
+            pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Error updating loan balance: " + e.getMessage());
-            return false;
         }
     }
 

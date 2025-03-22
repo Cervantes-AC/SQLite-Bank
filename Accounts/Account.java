@@ -1,6 +1,5 @@
 package Accounts;
 
-import Transactions.Transaction;
 import java.sql.*;
 
 public class Account {
@@ -28,9 +27,6 @@ public class Account {
     public int getBankID() { return bankID; }
     public String getType() { return type; }
     public String getAccountID() { return accountID; }
-    public String getFirstName() { return firstName; }
-    public String getLastName() { return lastName; }
-    public String getEmail() { return email; }
     public String getPin() { return pin; }
 
     //Setters
@@ -111,6 +107,7 @@ public class Account {
 
     // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
+        // Prefix and table mappings for each account type
         String prefix;
         String table;
 
@@ -136,13 +133,8 @@ public class Account {
                 throw new IllegalArgumentException("Invalid account type: " + type);
         }
 
-        // Validate that table is set correctly
-        if (table == null || table.isEmpty()) {
-            throw new IllegalStateException("Table name is not properly assigned for account type: " + type);
-        }
-
         int count = 1;
-        String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?"; // Corrected Query
+        String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -150,13 +142,13 @@ public class Account {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                count = rs.getInt("count") + 1; // Ensure count starts from 1
+                count = rs.getInt("count") + 1;  // Increment for the next account
             }
         } catch (SQLException e) {
             System.out.println("Failed to generate account ID: " + e.getMessage());
         }
 
-        // Generate AccountID in format SA01-4 (example for bankID=4)
+        // Format it as SA01-BankID or CA01-BankID
         return String.format("%s%02d-%d", prefix, count, bankID);
     }
 
@@ -192,10 +184,10 @@ public class Account {
                 pstmt.setString(1, this.accountID);
                 ResultSet rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    info.append("- Type: ").append(rs.getString("Type"))
-                            .append(", Amount: ").append(rs.getDouble("Amount"))
+                    info.append("- ").append(rs.getString("Type"))
+                            .append(" of ₱ ").append(rs.getDouble("Amount"))
                             .append(", Description: ").append(rs.getString("Description"))
-                            .append(", Date: ").append(rs.getString("Date"))
+                            .append(" at ").append(rs.getString("Date"))
                             .append("\n");
                 }
             }
@@ -205,31 +197,6 @@ public class Account {
 
         return info.toString();
     }
-    // Insert Account into SQLite database (handles Savings and Credit properly)
-    private boolean isAccountIDUnique(String accountID) {
-        String sql = "SELECT COUNT(*) AS count FROM " + getAccountTable() + " WHERE AccountID = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, accountID);
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next() && rs.getInt("count") == 0; // If count == 0, ID is unique
-        } catch (SQLException e) {
-            System.out.println("Error checking account ID uniqueness: " + e.getMessage());
-        }
-        return false;
-    }
-    // Helper method to get correct table name
-    private String getAccountTable() {
-        switch (type.toLowerCase()) {
-            case "savings": return "SavingsAccount";
-            case "credit": return "CreditAccount";
-            case "business": return "BusinessAccount";
-            case "educational": return "EducationalAccount";
-            default: throw new IllegalArgumentException("Invalid account type: " + type);
-        }
-    }
-
-
 
     @Override
     public String toString() {

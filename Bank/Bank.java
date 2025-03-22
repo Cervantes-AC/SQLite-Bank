@@ -40,12 +40,6 @@ public class Bank {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-
-
     public double getDepositLimit() {
         return DepositLimit;
     }
@@ -54,8 +48,6 @@ public class Bank {
     public double getWithdrawLimit() {
         return WithdrawLimit;
     }
-
-
 
     public double getProcessingFee() {
         return processingFee;

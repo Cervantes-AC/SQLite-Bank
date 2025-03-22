@@ -7,13 +7,13 @@ import Main.*;
 /**
  * BankLauncher Class
  * Manages interactions with banks and accounts.
- *
  * Now integrates with SQLite for persistent data storage.
  */
 public class BankLauncher {
     private static Bank loggedBank = null;
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
     private static final Scanner input = new Scanner(System.in);
+    public static int loggedInBankID = -1; // Default to -1 (not logged in)
 
     /**
      * Checks if a bank is currently logged in.
@@ -23,34 +23,44 @@ public class BankLauncher {
     }
 
     /**
-     * Initializes bank interaction.
+     * Initializes bank interaction with a retry mechanism (3 attempts).
      */
     public static void bankInit() {
-        Main.showMenuHeader("Bank Menu");
-        Main.showMenu(3, 2);
-        Main.setOption();
+        int attempts = 0;
+        while (attempts < 3) {
+            Main.showMenuHeader("Bank Menu");
+            Main.showMenu(3, 2);
+            Main.setOption();
 
-        switch (Main.getOption()) {
-            case 1:
-                ShowRegisteredBank();
-                System.out.print("Enter Bank ID: ");
-                String name = input.nextLine();
-                System.out.print("Enter passcode: ");
-                String passcode = input.nextLine();
-                bankLogin(name, passcode);
+            switch (Main.getOption()) {
+                case 1:
+                    ShowRegisteredBank();
+                    System.out.print("Enter Bank ID: ");
+                    String name = input.nextLine();
+                    System.out.print("Enter passcode: ");
+                    String passcode = input.nextLine();
 
-                if (loggedBank != null) {
-                    bankMenu();
-                } else {
-                    System.out.println("Invalid credentials.");
-                }
-                break;
-            case 2:
-                System.out.print("Returning to Main Menu\n");
-                break;
-            default:
-                System.out.println("Invalid option. Try again.");
+                    bankLogin(name, passcode);
+
+                    if (loggedBank != null) {
+                        bankMenu();
+                        return; // Exit after successful login
+                    } else {
+                        System.out.println("Invalid credentials. Please try again.\n");
+                        attempts++;
+                    }
+                    break;
+
+                case 2:
+                    System.out.println("Returning to Main Menu");
+                    return; // Exit loop on choosing to return
+
+                default:
+                    System.out.println("Invalid option. Try again.\n");
+                    break;
+            }
         }
+        System.out.println("Too many failed attempts. Returning to Main Menu.");
     }
 
     /**
@@ -135,18 +145,27 @@ public class BankLauncher {
             }
 
             ResultSet rs = pstmt.executeQuery();
+
+            // Check if ResultSet is empty
+            if (!rs.isBeforeFirst()) {  // isBeforeFirst() returns false if the ResultSet is empty
+                System.out.println("No accounts found.");
+                return;
+            }
+
             while (rs.next()) {
                 // Retrieve and display the account type, and other information
-                String accountType = rs.getString("AccountType");  // Correctly fetch the alias
+                String accountType = rs.getString("AccountType");
                 System.out.println("Account Type: " + accountType);
                 System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName"));
                 System.out.println("Account Number: " + rs.getString("AccountID"));
                 System.out.println("-----------------------------------");
             }
+
         } catch (SQLException e) {
             System.out.println("Error displaying accounts: " + e.getMessage());
         }
     }
+
 
 
     /**
@@ -199,9 +218,6 @@ public class BankLauncher {
         }
     }
 
-
-
-
     /**
      * Handles bank login.
      */
@@ -224,8 +240,7 @@ public class BankLauncher {
                             rs.getDouble("processingFee")
                     );
 
-                    loggedInBankID = rs.getInt("BankID");
-                    System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
+                    System.out.println("Successfully logged into " + loggedBank.getName() + " Banking System");
                 } else {
                     System.out.println("Login failed! Invalid Bank ID or Passcode.");
                 }
@@ -256,52 +271,12 @@ public class BankLauncher {
         newBank.InsertBank();
     }
 
-    /**
-     * Retrieves a bank from the database based on criteria.
-     */
-    public static Bank getBank(String name) {
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT * FROM Bank WHERE Name = ?";
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, name);
-                ResultSet rs = pstmt.executeQuery();
-                if (rs.next()) {
-                    return new Bank(
-                            rs.getInt("BankID"),
-                            rs.getString("Name"),
-                            rs.getString("Passcode"),
-                            rs.getDouble("DepositLimit"),
-                            rs.getDouble("WithdrawLimit"),
-                            rs.getDouble("CreditLimit"),
-                            rs.getDouble("processingFee")
-                    );
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     /**
-     * Returns the number of registered banks.
+     * Displays all registered banks with their BankID and Name.
      */
-    public static int bankSize() {
-        int count = 0;
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            String query = "SELECT COUNT(*) AS count FROM Bank";
-            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-                count = rs.getInt("count");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
     public static void ShowRegisteredBank() {
-        String query;
-        query = "SELECT BankID, Name FROM Bank";
+        String query = "SELECT BankID, Name FROM Bank";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              Statement stmt = conn.createStatement();
@@ -309,14 +284,10 @@ public class BankLauncher {
 
             Main.showMenuHeader("Registered Bank");
             while (rs.next()) {
-                int bankID = rs.getInt("BankID");
-                String bankName = rs.getString("Name");
-
-                System.out.printf("[%d] %s%n", bankID, bankName);
+                System.out.printf("[%d] %s%n", rs.getInt("BankID"), rs.getString("Name"));
             }
         } catch (SQLException e) {
             System.out.println("Error fetching registered banks: " + e.getMessage());
         }
     }
-    public static int loggedInBankID = -1; // Default to -1 (not logged in)
 }
