@@ -26,7 +26,7 @@ public class CreditAccount extends Account implements Payment, Recompense {
         this.setAccountID(accountID);
         loadCreditAccountDetails(accountID);
 
-        // ✅ Fetch credit limit from database instead of using `Bank.getBankByID()`
+        //Fetch credit limit from database
         this.creditLimit = getCreditLimitFromDatabase(getBankID());
     }
 
@@ -143,7 +143,7 @@ public class CreditAccount extends Account implements Payment, Recompense {
         }
     }
 
-    // ✅ Fetch credit limit from the database
+    // Fetch credit limit from the database
     private static double getCreditLimitFromDatabase(int bankID) {
         String sql = "SELECT CreditLimit FROM Bank WHERE BankID = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);

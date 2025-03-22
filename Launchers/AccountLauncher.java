@@ -30,6 +30,10 @@ public class AccountLauncher {
                     CreditAccountLauncher.creditAccountInit();
                 } else if (account instanceof SavingsAccount) {
                     SavingsAccountLauncher.savingsAccountInit();
+                } else if (account instanceof BusinessAccount) {
+                    BusinessAccountLauncher.businessAccountInit();
+                } else if (account instanceof EducationalAccount) {
+                        EducationalAccountLauncher.educationalAccountInit();
                 } else {
                     System.out.println("Unknown account type. Logging out...");
                     destroyLogSession();
@@ -45,17 +49,21 @@ public class AccountLauncher {
     private static Account authenticateAccount(String accountID, String passcode) {
         String sqlSavings = "SELECT * FROM SavingsAccount WHERE AccountID = ? AND PIN = ?";
         String sqlCredit = "SELECT * FROM CreditAccount WHERE AccountID = ? AND PIN = ?";
+        String sqlBusiness = "SELECT * FROM BusinessAccount WHERE AccountID = ? AND PIN = ?";
+        String sqlEducational = "SELECT * FROM EducationalAccount WHERE AccountID = ? AND PIN = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmtSavings = conn.prepareStatement(sqlSavings);
-             PreparedStatement pstmtCredit = conn.prepareStatement(sqlCredit)) {
+             PreparedStatement pstmtCredit = conn.prepareStatement(sqlCredit);
+             PreparedStatement pstmtBusiness = conn.prepareStatement(sqlBusiness);
+             PreparedStatement pstmtEducational = conn.prepareStatement(sqlEducational)) {
 
             // Check if it's a Savings Account
             pstmtSavings.setString(1, accountID);
             pstmtSavings.setString(2, passcode);
             try (ResultSet rs = pstmtSavings.executeQuery()) {
                 if (rs.next()) {
-                    return new SavingsAccount(accountID);  // Uses SavingsAccount constructor
+                    return new SavingsAccount(accountID);
                 }
             }
 
@@ -65,6 +73,24 @@ public class AccountLauncher {
             try (ResultSet rs = pstmtCredit.executeQuery()) {
                 if (rs.next()) {
                     return new CreditAccount(accountID);
+                }
+            }
+
+            // Check if it's a Business Account
+            pstmtBusiness.setString(1, accountID);
+            pstmtBusiness.setString(2, passcode);
+            try (ResultSet rs = pstmtBusiness.executeQuery()) {
+                if (rs.next()) {
+                    return new BusinessAccount(accountID);
+                }
+            }
+
+            // Check if it's a Educational Account
+            pstmtEducational.setString(1, accountID);
+            pstmtEducational.setString(2, passcode);
+            try (ResultSet rs = pstmtEducational.executeQuery()) {
+                if (rs.next()) {
+                    return new EducationalAccount(accountID);
                 }
             }
 

@@ -26,12 +26,13 @@ public class BankLauncher {
      * Initializes bank interaction.
      */
     public static void bankInit() {
+        Main.showMenuHeader("Bank Menu");
         Main.showMenu(3, 2);
         Main.setOption();
 
         switch (Main.getOption()) {
             case 1:
-                ShowBankMenu();
+                ShowRegisteredBank();
                 System.out.print("Enter Bank ID: ");
                 String name = input.nextLine();
                 System.out.print("Enter passcode: ");
@@ -57,15 +58,16 @@ public class BankLauncher {
      */
     private static void bankMenu() {
         while (isLogged()) {
-            System.out.println("\n1. Show Accounts\n2. Create New Account\n3. Logout");
-            int choice = input.nextInt();
-            input.nextLine();
-
-            switch (choice) {
+            Main.showMenuHeader("Bank Menu");
+            Main.showMenu(31);
+            Main.setOption();
+            switch (Main.getOption()) {
                 case 1:
+                    Main.showMenuHeader("View Accounts Menu");
                     showAccounts();
                     break;
                 case 2:
+                    Main.showMenuHeader("Create New Account");
                     newAccount();
                     break;
                 case 3:
@@ -88,31 +90,58 @@ public class BankLauncher {
         switch (Main.getOption()) {
             case 1:
                 Main.showMenuHeader("Credit Accounts");
-                query = "SELECT * FROM CreditAccount WHERE BankID = ?";
+                query = "SELECT AccountID, FirstName, LastName, 'Credit' AS AccountType FROM CreditAccount WHERE BankID = ?";
                 break;
             case 2:
                 Main.showMenuHeader("Savings Accounts");
-                query = "SELECT * FROM SavingsAccount WHERE BankID = ?";
+                query = "SELECT AccountID, FirstName, LastName, 'Savings' AS AccountType FROM SavingsAccount WHERE BankID = ?";
                 break;
             case 3:
+                Main.showMenuHeader("Business Accounts");
+                query = "SELECT AccountID, FirstName, LastName, 'Business' AS AccountType FROM BusinessAccount WHERE BankID = ?";
+                break;
+            case 4:
+                Main.showMenuHeader("Educational Accounts");
+                query = "SELECT AccountID, FirstName, LastName, 'Educational' AS AccountType FROM EducationalAccount WHERE BankID = ?";
+                break;
+            case 5:
                 Main.showMenuHeader("All Accounts");
-                query = "SELECT * FROM CreditAccount WHERE BankID = ? UNION SELECT * FROM SavingsAccount WHERE BankID = ?";
+                query = "SELECT AccountID, FirstName, LastName, 'Credit' AS AccountType FROM CreditAccount WHERE BankID = ? " +
+                        "UNION " +
+                        "SELECT AccountID, FirstName, LastName, 'Savings' AS AccountType FROM SavingsAccount WHERE BankID = ? " +
+                        "UNION " +
+                        "SELECT AccountID, FirstName, LastName, 'Business' AS AccountType FROM BusinessAccount WHERE BankID = ? " +
+                        "UNION " +
+                        "SELECT AccountID, FirstName, LastName, 'Educational' AS AccountType FROM EducationalAccount WHERE BankID = ?";
                 break;
             default:
-                System.out.println("Invalid account type.");
+                System.out.println("Go back to previous menu.");
                 return;
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setInt(1, loggedBank.getBankID());
-            if (Main.getOption() == 3) pstmt.setInt(2, loggedBank.getBankID());
+            // Set parameters depending on the selected option
+            if (Main.getOption() == 5) {
+                // For case 5, all four queries will use the same BankID
+                pstmt.setInt(1, loggedBank.getBankID());
+                pstmt.setInt(2, loggedBank.getBankID());
+                pstmt.setInt(3, loggedBank.getBankID());
+                pstmt.setInt(4, loggedBank.getBankID());
+            } else {
+                // For other cases (1-4), only one parameter (BankID) is needed
+                pstmt.setInt(1, loggedBank.getBankID());
+            }
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
+                // Retrieve and display the account type, and other information
+                String accountType = rs.getString("AccountType");  // Correctly fetch the alias
+                System.out.println("Account Type: " + accountType);
                 System.out.println("User: " + rs.getString("FirstName") + " " + rs.getString("LastName"));
                 System.out.println("Account Number: " + rs.getString("AccountID"));
+                System.out.println("-----------------------------------");
             }
         } catch (SQLException e) {
             System.out.println("Error displaying accounts: " + e.getMessage());
@@ -133,25 +162,43 @@ public class BankLauncher {
         System.out.print("Enter PIN: ");
         String pin = input.nextLine();
 
-        System.out.print("Enter account type (Savings/Credit): ");
-        String type = input.nextLine().toLowerCase();
+        System.out.print("Enter account type (Savings/Credit/Business/Educational): ");
+        String type = input.nextLine().toLowerCase(); // Convert to lowercase for case insensitivity
 
-        double amount = 0;
+        double amount = 0; // Default value for initial amount
 
-        if (type.equals("savings") || type.equals("credit")) {
-            System.out.print(type.equals("savings") ? "Enter initial balance: " : "Enter loan amount: ");
-            amount = input.nextDouble();
-            input.nextLine();
+        // Handle different account types and their specific requirements
+        if (type.equals("savings") || type.equals("credit") || type.equals("business") || type.equals("educational")) {
+
+            // Ask for initial amount or loan based on account type
+            if (type.equals("savings") || type.equals("educational")) {
+                System.out.print("Enter initial balance: ");
+                amount = input.nextDouble();
+            }
+            if (type.equals("credit") || type.equals("business")) {
+                System.out.print("Enter loan amount: ");
+                amount = input.nextDouble();
+            }
+
+            input.nextLine(); // Consume the newline character after entering amount
+
+            // Create a general Account object based on the type
             Account newAccount = new Account(loggedBank.getBankID(), type, firstName, lastName, email, pin);
+
+            // Insert the new account into the database and confirm success
             if (newAccount.insertAccount(amount)) {
-                System.out.println(type.equals("savings") ? "Savings account created successfully!" : "Credit account created successfully!");
+                System.out.println(type.equals("savings") ? "Savings account created successfully!" :
+                        type.equals("credit") ? "Credit account created successfully!" :
+                                type.equals("business") ? "Business account created successfully!" :
+                                        "Educational account created successfully!");
             } else {
                 System.out.println("Failed to create " + type + " account.");
             }
         } else {
-            System.out.println("Invalid account type. Please enter Savings or Credit.");
+            System.out.println("Invalid account type. Please enter Savings, Credit, Business, or Educational.");
         }
     }
+
 
 
 
@@ -177,7 +224,6 @@ public class BankLauncher {
                             rs.getDouble("processingFee")
                     );
 
-                    // Set the logged-in bank ID
                     loggedInBankID = rs.getInt("BankID");
                     System.out.println("Successfully logged into Bank ID: " + loggedInBankID);
                 } else {
@@ -210,7 +256,50 @@ public class BankLauncher {
         newBank.InsertBank();
     }
 
-    public static void ShowBankMenu() {
+    /**
+     * Retrieves a bank from the database based on criteria.
+     */
+    public static Bank getBank(String name) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT * FROM Bank WHERE Name = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, name);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return new Bank(
+                            rs.getInt("BankID"),
+                            rs.getString("Name"),
+                            rs.getString("Passcode"),
+                            rs.getDouble("DepositLimit"),
+                            rs.getDouble("WithdrawLimit"),
+                            rs.getDouble("CreditLimit"),
+                            rs.getDouble("processingFee")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the number of registered banks.
+     */
+    public static int bankSize() {
+        int count = 0;
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String query = "SELECT COUNT(*) AS count FROM Bank";
+            try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+                count = rs.getInt("count");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    public static void ShowRegisteredBank() {
         String query;
         query = "SELECT BankID, Name FROM Bank";
 

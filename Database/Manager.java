@@ -1,5 +1,4 @@
 package Database;
-
 import java.sql.*;
 
 public class Manager {
@@ -48,6 +47,30 @@ public class Manager {
                     );
                     """,
                         """
+                    CREATE TABLE IF NOT EXISTS BusinessAccount (
+                        BankID INTEGER NOT NULL,
+                        AccountID TEXT UNIQUE NOT NULL,
+                        FirstName TEXT NOT NULL,
+                        LastName TEXT NOT NULL,
+                        Email TEXT NOT NULL,
+                        PIN TEXT NOT NULL,
+                        Loan REAL DEFAULT 0.0,
+                        FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
+                    );
+                    """,
+                        """
+                    CREATE TABLE IF NOT EXISTS EducationalAccount (
+                        BankID INTEGER NOT NULL,
+                        AccountID TEXT UNIQUE NOT NULL,
+                        FirstName TEXT NOT NULL,
+                        LastName TEXT NOT NULL,
+                        Email TEXT NOT NULL,
+                        PIN TEXT NOT NULL,
+                        Balance REAL DEFAULT 0.0,
+                        FOREIGN KEY (BankID) REFERENCES Bank(BankID) ON DELETE CASCADE
+                    );
+                    """,
+                        """
                     CREATE TABLE IF NOT EXISTS Transactions (
                         AccountID TEXT NOT NULL,
                         Type TEXT CHECK(Type IN ('Withdrawal', 'Deposit', 'Fund Transfer', 'Payment', 'Recompense')) NOT NULL,
@@ -55,12 +78,16 @@ public class Manager {
                         Description TEXT,
                         Date TEXT DEFAULT (datetime('now', 'localtime')),
                         FOREIGN KEY (AccountID) REFERENCES SavingsAccount(AccountID) ON DELETE CASCADE,
-                        FOREIGN KEY (AccountID) REFERENCES CreditAccount(AccountID) ON DELETE CASCADE
+                        FOREIGN KEY (AccountID) REFERENCES CreditAccount(AccountID) ON DELETE CASCADE,
+                        FOREIGN KEY (AccountID) REFERENCES BusinessAccount(AccountID) ON DELETE CASCADE,
+                        FOREIGN KEY (AccountID) REFERENCES EducationalAccount(AccountID) ON DELETE CASCADE
                     );
                     """,
                         // Adding indexes for faster lookups
                         "CREATE INDEX IF NOT EXISTS idx_savings_account ON SavingsAccount(AccountID);",
                         "CREATE INDEX IF NOT EXISTS idx_credit_account ON CreditAccount(AccountID);",
+                        "CREATE INDEX IF NOT EXISTS idx_business_account ON BusinessAccount(AccountID);",
+                        "CREATE INDEX IF NOT EXISTS idx_educational_account ON EducationalAccount(AccountID);",
                         "CREATE INDEX IF NOT EXISTS idx_transactions_account ON Transactions(AccountID);"
                 };
 

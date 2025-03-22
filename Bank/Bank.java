@@ -1,5 +1,6 @@
 package Bank;
 
+import Accounts.*;
 import java.sql.*;
 
 /**
@@ -9,9 +10,8 @@ import java.sql.*;
  */
 public class Bank {
     private int BankID;
-    private final String name;
-    private final String passcode;
-    private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 10000.0;
+    private String name, passcode;
+    private double DepositLimit = 50000.0, WithdrawLimit = 50000.0, CreditLimit = 100000.0;
     private double processingFee = 10.0;
 
     private static final String DB_URL = "jdbc:sqlite:Database/Database.db";
@@ -35,13 +35,33 @@ public class Bank {
         return BankID;
     }
 
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+
     public double getDepositLimit() {
         return DepositLimit;
     }
 
+
     public double getWithdrawLimit() {
         return WithdrawLimit;
     }
+
+
+
+    public double getProcessingFee() {
+        return processingFee;
+    }
+
+
 
     /**
      * Saves the bank to the database and retrieves the generated BankID.

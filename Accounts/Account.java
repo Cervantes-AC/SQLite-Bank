@@ -51,10 +51,10 @@ public class Account {
 
     // Ensure the account type is either Savings or Credit
     private String validateAccountType(String type) {
-        if (type.equalsIgnoreCase("Savings") || type.equalsIgnoreCase("Credit")) {
+        if (type.equalsIgnoreCase("Savings") || type.equalsIgnoreCase("Credit") || type.equalsIgnoreCase("Educational") || type.equalsIgnoreCase("Business")) {
             return type;
         }
-        throw new IllegalArgumentException("Invalid account type. Must be 'Savings' or 'Credit'");
+        throw new IllegalArgumentException("Invalid account type. Must be 'Savings' , 'Credit' , 'Business' or 'Educational'");
     }
 
     // Insert Account into SQLite database (handles Savings and Credit properly)
@@ -69,6 +69,12 @@ public class Account {
         } else if (type.equalsIgnoreCase("Credit")) {
             table = "CreditAccount";
             sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Loan) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        } else if (type.equalsIgnoreCase("Business")) {
+            table = "BusinessAccount";
+            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Loan) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        } else if (type.equalsIgnoreCase("Educational")) {
+            table = "EducationalAccount";
+            sql = "INSERT INTO " + table + " (BankID, AccountID, FirstName, LastName, Email, PIN, Balance) VALUES (?, ?, ?, ?, ?, ?, ?)";
         } else {
             System.out.println("Invalid account type.");
             return false;
@@ -105,11 +111,28 @@ public class Account {
 
     // Generate Account ID (SA01-BankID or CA02-BankID)
     private String generateAccountID() {
-        String prefix = type.equalsIgnoreCase("Savings") ? "SA" : "CA";
-        int count = 1;
+        // Prefix and table mappings for each account type
+        String prefix = "";
+        String table = "";
 
-        // Fetch the current count of accounts for this bank and type
-        String table = type.equalsIgnoreCase("Savings") ? "SavingsAccount" : "CreditAccount";
+        // Determine prefix and table based on account type
+        if (type.equalsIgnoreCase("Savings")) {
+            prefix = "SA";
+            table = "SavingsAccount";
+        } else if (type.equalsIgnoreCase("Credit")) {
+            prefix = "CA";
+            table = "CreditAccount";
+        } else if (type.equalsIgnoreCase("Business")) {
+            prefix = "BA";
+            table = "BusinessAccount";
+        } else if (type.equalsIgnoreCase("Educational")) {
+            prefix = "EA";
+            table = "EducationalAccount";
+        } else {
+            throw new IllegalArgumentException("Invalid account type: " + type);
+        }
+
+        int count = 1;
         String sql = "SELECT COUNT(*) AS count FROM " + table + " WHERE BankID = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -151,13 +174,17 @@ public class Account {
     // Fetch transaction history for the account
     public String getTransactionsInfo() {
         StringBuilder info = new StringBuilder();
+
+        // Print the account ID as part of the output
+        info.append("Transaction History for Account ID: ").append(this.accountID).append("\n");
+
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String query = "SELECT * FROM Transactions WHERE AccountID = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, this.accountID);
                 ResultSet rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    info.append("Type: ").append(rs.getString("Type"))
+                    info.append("- Type: ").append(rs.getString("Type"))
                             .append(", Amount: ").append(rs.getDouble("Amount"))
                             .append(", Description: ").append(rs.getString("Description"))
                             .append(", Date: ").append(rs.getString("Date"))
@@ -167,6 +194,7 @@ public class Account {
         } catch (SQLException e) {
             System.out.println("Failed to fetch transactions: " + e.getMessage());
         }
+
         return info.toString();
     }
 

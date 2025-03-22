@@ -24,7 +24,7 @@ public enum Menu {
     /**
      * Main.Menu option inside Bank.Bank module to show a particular set of accounts.
      */
-    ShowAccounts(new String[]{ "Credit Accounts", "Savings Accounts", "All Accounts", "Go Back" }, 32),
+    ShowAccounts(new String[]{ "Credit Accounts", "Savings Accounts","Business Accounts","Educational Accounts" , "All Accounts", "Go Back" }, 32),
 
     /**
      * Accounts.Account type selection menu. Used when creating New Accounts for every Bank.Bank.

@@ -4,6 +4,17 @@ import Accounts.CreditAccount;
 import Transactions.IllegalAccountType;
 
 import java.util.Scanner;
+/**
+ * CreditAccountLauncher Class
+ * Extends AccountLauncher to handle credit account-specific operations.
+ *
+ * Methods:
+ * - creditAccountInit(): Initializes credit account interactions, displaying the main menu.
+ * - creditPaymentProcess(): Processes a credit payment transaction.
+ * - creditRecompenseProcess(): Handles credit recompense transactions.
+ * - getLoggedAccount(): Returns the currently logged-in CreditAccount.
+ */
+
 
 
 /**
@@ -35,7 +46,9 @@ public class CreditAccountLauncher extends AccountLauncher {
             System.out.println("\n1. View Loan Statement");
             System.out.println("2. Make Payment");
             System.out.println("3. Recompense Loan");
-            System.out.println("4. Logout");
+            System.out.println("4. Show Transactions");
+            System.out.println("5. Logout");
+
             System.out.print("Choose an option: ");
 
             int choice;
@@ -57,6 +70,9 @@ public class CreditAccountLauncher extends AccountLauncher {
                     creditRecompenseProcess();
                     break;
                 case 4:
+                    System.out.println(loggedAccount.getTransactionsInfo());
+                    break;
+                case 5:
                     System.out.println("Logging out...");
                     destroyLogSession();
                     return;
@@ -76,7 +92,6 @@ public class CreditAccountLauncher extends AccountLauncher {
             return;
         }
 
-        // FIX: Call pay() instead of recompense()
         try {
             boolean success = loggedAccount.pay(loggedAccount, amount);
             if (success) {
